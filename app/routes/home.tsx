@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 
 export function meta({}: Route.MetaArgs) {
@@ -17,8 +17,11 @@ type canvasElement ={
 }
 export default function Home() {
   const [elements, setElements] = useState<canvasElement[]>([]);
+  const [scale, setScale] = useState(1)
   const paperRef = useRef(null)
 
+
+  // function download
   async function downloadImage() {
   if (!paperRef.current) return;
 
@@ -49,6 +52,30 @@ export default function Home() {
     setElements([...elements, newText ]);
   }
 
+  // scale otomatis
+  useEffect(() => {
+  function calculateScale() {
+    const availableWidth = window.innerWidth - 40;
+    const availableHeight = window.innerHeight - 100;
+
+    const scaleX = availableWidth / 1080;
+    const scaleY = availableHeight / 1920;
+
+    const newScale = Math.min(scaleX, scaleY);
+
+    setScale(newScale);
+  }
+
+  calculateScale();
+
+  window.addEventListener("resize", calculateScale);
+
+  return () => {
+    window.removeEventListener("resize", calculateScale);
+  };
+}, []);
+
+  // handle mousea
   function handleMouseDown(e: React.MouseEvent, id: number) {
     console.log(`ini adlah e -> ${e}`)
     e.preventDefault();
@@ -92,64 +119,68 @@ export default function Home() {
   }
   return (
     <div className="min-h-screen bg-gray-200">
-      {/* Toolbar */}
-      <div className="h-16 bg-gray-300 flex items-center px-5">
-        <h1 className="text-xl font-bold">My Editor</h1>
-        <button
-          onClick={addText}
-          className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
-        >
-          + tambah teks
-        </button>
-        <button
-          onClick={downloadImage}
-          className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
-        >
-          Download PNG
-        </button>
-        <div></div>
-      </div>
       {/* Workspace */}
-      <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10">
+      <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10 overflow-hidden">
         {/* Kertas */}
         <div
-          ref={paperRef}
-          className="relative w-270 h-[1920px] bg-white text-gray-600 shadow-lg rounded-tl-3xl"
+          style={{
+            width: "1080px",
+            height: "1920px",
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+          }}
         >
-          <div className="p-4">
-            <h1 className="text-xl font-bold uppercase">
-              List Pembelajaran Sekarang
-            </h1>
-            <ul>
-              <li>
-                kertas <span className="text-red-500">(donne)</span>
-              </li>
-              <li>
-                add teks <span className="text-red-500">(donne)</span>
-              </li>
-              <li>drag</li>
-              <li>resize</li>
-              <li>gambar</li>
-              <li>
-                shape <span className="text-red-500">(donne)</span>
-              </li>
-              <li>dowload</li>
-            </ul>
-            {elements.map((element) => (
-              <div
-                key={element.id}
-                className="absolute cursor-move"
-                style={{
-                  left: element.x,
-                  top: element.y,
-                }}
-                onMouseDown={(e) => handleMouseDown(e, element.id)}
+          <div
+            ref={paperRef}
+            className="relative w-270 h-[1920px] bg-white text-gray-600 shadow-lg rounded-tl-3xl"
+          >
+            <div className="p-4">
+              <h1 className="text-xl font-bold uppercase">
+                List Pembelajaran Sekarang
+              </h1>
+              <button
+                onClick={addText}
+                className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
               >
-                <h1 className="bg-red-200 px-2.5 rounded-tl-md">
-                  {element.content}
-                </h1>
-              </div>
-            ))}
+                + tambah teks
+              </button>
+              <button
+                onClick={downloadImage}
+                className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
+              >
+                Download PNG
+              </button>
+              <ul>
+                <li>
+                  kertas <span className="text-red-500">(donne)</span>
+                </li>
+                <li>
+                  add teks <span className="text-red-500">(donne)</span>
+                </li>
+                <li>drag</li>
+                <li>resize</li>
+                <li>gambar</li>
+                <li>
+                  shape <span className="text-red-500">(donne)</span>
+                </li>
+                <li>dowload</li>
+              </ul>
+              {elements.map((element) => (
+                <div
+                  key={element.id}
+                  className="absolute cursor-move"
+                  style={{
+                    left: element.x,
+                    top: element.y,
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, element.id)}
+                >
+                  <h1 className="bg-red-200 px-2.5 rounded-tl-md">
+                    {element.content}
+                  </h1>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
