@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { useState } from "react";
+import React, { useState } from "react";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -28,6 +28,47 @@ export default function Home() {
     setElements([...elements, newText ]);
   }
 
+  function handleMouseDown(e: React.MouseEvent, id: number) {
+    console.log(`ini adlah e -> ${e}`)
+    e.preventDefault();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+
+    const element = elements.find((item) => item.id === id);
+
+    if (!element) return;
+
+    const startElementX = element.x;
+    const startElementY = element.y;
+
+    function handleMouseMove(e: MouseEvent) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      setElements((currentElements) =>
+        currentElements.map((item) => {
+          if (item.id === id) {
+            return {
+              ...item,
+              x: startElementX + dx,
+              y: startElementY + dy,
+            };
+          }
+
+          return item;
+        }),
+      );
+    }
+
+    function handleMouseUp() {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  }
   return (
     <div className="min-h-screen bg-gray-200">
       {/* Toolbar */}
@@ -44,20 +85,34 @@ export default function Home() {
       {/* Workspace */}
       <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10">
         {/* Kertas */}
-        <div className="relative w-198.5 h-280.75 bg-white text-gray-600 shadow-lg rounded-md">
-          <h1 className="p-4">workspace</h1>
-          {elements.map((element) => (
-            <div
-              key={element.id}
-              className="absolute"
-              style={{
-                left: element.x,
-                top: element.y,
-              }}
-            >
-              <h1 className="bg-red-200 px-2.5 rounded-tl-md">{element.content}</h1>
-            </div>
-          ))}
+        <div className="relative w-198.5 h-280.75 bg-white text-gray-600 shadow-lg rounded-tl-3xl">
+          <div className="p-4">
+            <h1 className="text-xl font-bold uppercase">List Pembelajaran Sekarang</h1>
+            <ul>
+              <li>kertas <span className="text-red-500">(donne)</span></li>
+              <li>add teks <span className="text-red-500">(donne)</span></li>
+              <li>drag</li>
+              <li>resize</li>
+              <li>gambar</li>
+              <li>shape <span className="text-red-500">(donne)</span></li>
+              <li>dowload</li>
+            </ul>
+            {elements.map((element) => (
+              <div
+                key={element.id}
+                className="absolute cursor-move"
+                style={{
+                  left: element.x,
+                  top: element.y,
+                }}
+                onMouseDown={(e) => handleMouseDown(e, element.id)}
+              >
+                <h1 className="bg-red-200 px-2.5 rounded-tl-md">
+                  {element.content}
+                </h1>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

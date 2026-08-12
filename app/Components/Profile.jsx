@@ -9,7 +9,7 @@ function App() {
       {/* Workspace */}
       <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10">
         {/* Kertas */}
-        <div className="w-[794px] h-[1123px] bg-white shadow-lg"></div>
+        {/* <div className="w-[794px] h-[1123px] bg-white shadow-lg"></div> */}
       </div>
     </div>
   );
