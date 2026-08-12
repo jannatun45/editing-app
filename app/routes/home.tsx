@@ -1,5 +1,6 @@
 import type { Route } from "./+types/home";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { toPng } from "html-to-image";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -16,7 +17,26 @@ type canvasElement ={
 }
 export default function Home() {
   const [elements, setElements] = useState<canvasElement[]>([]);
+  const paperRef = useRef(null)
 
+  async function downloadImage() {
+  if (!paperRef.current) return;
+
+  try {
+    const dataUrl = await toPng(paperRef.current, {
+      pixelRatio: 2,
+    });
+
+    const link = document.createElement("a");
+
+    link.download = "desain.png";
+    link.href = dataUrl;
+
+    link.click();
+  } catch (error) {
+    console.error("Gagal download:", error);
+  }
+}
   function addText() {
     const newText = {
       id: Date.now(),
@@ -80,21 +100,38 @@ export default function Home() {
         >
           + tambah teks
         </button>
+        <button
+          onClick={downloadImage}
+          className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
+        >
+          Download PNG
+        </button>
         <div></div>
       </div>
       {/* Workspace */}
       <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10">
         {/* Kertas */}
-        <div className="relative w-198.5 h-280.75 bg-white text-gray-600 shadow-lg rounded-tl-3xl">
+        <div
+          ref={paperRef}
+          className="relative w-270 h-[1920px] bg-white text-gray-600 shadow-lg rounded-tl-3xl"
+        >
           <div className="p-4">
-            <h1 className="text-xl font-bold uppercase">List Pembelajaran Sekarang</h1>
+            <h1 className="text-xl font-bold uppercase">
+              List Pembelajaran Sekarang
+            </h1>
             <ul>
-              <li>kertas <span className="text-red-500">(donne)</span></li>
-              <li>add teks <span className="text-red-500">(donne)</span></li>
+              <li>
+                kertas <span className="text-red-500">(donne)</span>
+              </li>
+              <li>
+                add teks <span className="text-red-500">(donne)</span>
+              </li>
               <li>drag</li>
               <li>resize</li>
               <li>gambar</li>
-              <li>shape <span className="text-red-500">(donne)</span></li>
+              <li>
+                shape <span className="text-red-500">(donne)</span>
+              </li>
               <li>dowload</li>
             </ul>
             {elements.map((element) => (
