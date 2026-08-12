@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import React, { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import Table from "../components/Table";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -41,6 +42,7 @@ export default function Home() {
     console.error("Gagal download:", error);
   }
 }
+
   function addText() {
     const newText = {
       id: Date.now(),
@@ -121,7 +123,6 @@ export default function Home() {
     <div className="min-h-screen bg-gray-200">
       {/* Workspace */}
       <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10 overflow-hidden">
-        {/* Kertas */}
         <div
           style={{
             width: "1080px",
@@ -130,41 +131,26 @@ export default function Home() {
             transformOrigin: "top center",
           }}
         >
+          <button
+            onClick={addText}
+            className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
+          >
+            + tambah teks
+          </button>
+          <button
+            onClick={downloadImage}
+            className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
+          >
+            Download PNG
+          </button>
+
+          {/* canvas */}
           <div
             ref={paperRef}
             className="relative w-270 h-[1920px] bg-white text-gray-600 shadow-lg rounded-tl-3xl"
           >
             <div className="p-4">
-              <h1 className="text-xl font-bold uppercase">
-                List Pembelajaran Sekarang
-              </h1>
-              <button
-                onClick={addText}
-                className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
-              >
-                + tambah teks
-              </button>
-              <button
-                onClick={downloadImage}
-                className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
-              >
-                Download PNG
-              </button>
-              <ul>
-                <li>
-                  kertas <span className="text-red-500">(donne)</span>
-                </li>
-                <li>
-                  add teks <span className="text-red-500">(donne)</span>
-                </li>
-                <li>drag</li>
-                <li>resize</li>
-                <li>gambar</li>
-                <li>
-                  shape <span className="text-red-500">(donne)</span>
-                </li>
-                <li>dowload</li>
-              </ul>
+              <Table />
               {elements.map((element) => (
                 <div
                   key={element.id}
