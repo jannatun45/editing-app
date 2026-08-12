@@ -24,7 +24,8 @@ export default function Home() {
 
   try {
     const dataUrl = await toPng(paperRef.current, {
-      pixelRatio: 2,
+      pixelRatio: 1,
+      skipFonts: true,
     });
 
     const link = document.createElement("a");
