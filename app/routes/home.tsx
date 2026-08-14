@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import Table from "../components/Table";
 import Navbar from "~/components/Navbar";
-import NavLink  from "~/components/Navlink";
 
 export function meta({}: Route.MetaArgs) {
   return [
