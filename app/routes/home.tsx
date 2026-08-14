@@ -131,25 +131,17 @@ export default function Home() {
             transformOrigin: "top center",
           }}
         >
-          <button
-            onClick={addText}
-            className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
-          >
-            + tambah teks
-          </button>
-          <button
-            onClick={downloadImage}
-            className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
-          >
-            Download PNG
-          </button>
-
           {/* canvas */}
           <div
             ref={paperRef}
-            className="relative w-270 h-[1920px] bg-white text-gray-600 shadow-lg rounded-tl-3xl"
+            className="relative w-270 h-[1920px] bg-white px-12 py-24 text-gray-600 shadow-lg rounded-tl-3xl  "
           >
-            <div className="p-4">
+            <div className="flex h-full w-full flex-col items-center">
+              <div className="mb-8 flex flex-col items-center">
+                <h1 className="text-6xl font-bold">Klasemen Pekan 21</h1>
+
+                <h1 className="text-5xl">BRI Liga 1 2026/2027</h1>
+              </div>
               <Table />
               {elements.map((element) => (
                 <div
@@ -168,6 +160,18 @@ export default function Home() {
               ))}
             </div>
           </div>
+          <button
+            onClick={addText}
+            className="ml-2.5 px-2 py-1 bg-blue-400 text-white rounded-tl-xl rounded-br-md hover:bg-blue-600"
+          >
+            + tambah teks
+          </button>
+          <button
+            onClick={downloadImage}
+            className="ml-2.5 px-2 py-1 bg-green-400 text-white rounded-tl-xl rounded-br-md hover:bg-green-600"
+          >
+            Download PNG
+          </button>
         </div>
       </div>
     </div>

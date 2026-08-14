@@ -8,65 +8,53 @@ const features = tableFeatures({})
 // 4. Define your columns
 const columns: Array<ColumnDef<typeof features, Teams>> = [
   {
-    accessorKey: 'position',
-    header: 'Pos',
+    accessorKey: "position",
+    header: "Pos",
   },
   {
-  accessorKey: 'name',
-  header: 'Teams',
-  cell: (info) => (
-    <span>{info.getValue<string>()}</span>
-  ),
+    accessorKey: "name",
+    header: "Teams",
+    cell: (info) => <span>{info.getValue<string>()}</span>,
   },
   {
-    accessorKey: 'district',
-    header: 'District',
+    accessorKey: "points",
+    header: "PTS",
+    cell: (info) => <span className='font-bold'>{info.getValue<number>()}</span>,
   },
   {
-  accessorKey: 'points',
-  header: 'Points',
-  cell: (info) => (
-    <span>{info.getValue<number>()}</span>
-  ),
+    accessorKey: "played",
+    header: "P",
   },
   {
-    accessorKey: 'played',
-    header: 'P',
+    accessorKey: "wins",
+    header: "W",
   },
   {
-    accessorKey: 'wins',
-    header: 'W',
+    accessorKey: "draws",
+    header: "D",
   },
   {
-    accessorKey: 'draws',
-    header: 'D',
+    accessorKey: "losses",
+    header: "L",
   },
   {
-    accessorKey: 'losses',
-    header: 'L',
+    accessorKey: "goalsFor",
+    header: "GF",
   },
   {
-    accessorKey: 'goalsFor',
-    header: 'GF',
+    accessorKey: "goalsAgainst",
+    header: "GA",
   },
   {
-    accessorKey: 'goalsAgainst',
-    header: 'GA',
-  },
-  {
-      accessorKey: 'goalDifference',
-  header: 'GD',
-  cell: (info) => {
-    const value = info.getValue<number>()
+    accessorKey: "goalDifference",
+    header: "GD",
+    cell: (info) => {
+      const value = info.getValue<number>();
 
-    return (
-      <span>
-        {value > 0 ? `+${value}` : value}
-      </span>
-    )
+      return <span>{value > 0 ? `+${value}` : value}</span>;
+    },
   },
-  },
-]
+];
 
 export default function Table() {
   // 5. Create the table instance
@@ -79,7 +67,7 @@ export default function Table() {
 
   // 6. Render markup from the table instance APIs
 return (
-  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+  <div className="overflow-hidden rounded-tl-2xl shadow-sm">
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead className="bg-gray-50">
@@ -88,7 +76,9 @@ return (
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="whitespace-nowrap border-b border-gray-200 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                  className={`whitespace-nowrap border-b border-gray-200 px-4 py-3 text-xl font-semibold uppercase tracking-wide text-gray-500 ${
+                    header.column.id === "name" ? "text-left" : "text-center"
+                  }`}
                 >
                   {header.isPlaceholder ? null : (
                     <table.FlexRender header={header} />
@@ -101,14 +91,13 @@ return (
 
         <tbody className="divide-y divide-gray-100">
           {table.getRowModel().rows.map((row) => (
-            <tr
-              key={row.id}
-              className="transition-colors hover:bg-gray-50"
-            >
+            <tr key={row.id} className="transition-colors hover:bg-gray-200">
               {row.getAllCells().map((cell) => (
                 <td
                   key={cell.id}
-                  className="whitespace-nowrap px-4 py-4 text-sm text-gray-700"
+                  className={`whitespace-nowrap px-4 py-4 text-2xl text-gray-700 ${
+                    cell.column.id === "name" ? "text-left" : "text-center"
+                  }`}
                 >
                   <table.FlexRender cell={cell} />
                 </td>
@@ -119,5 +108,5 @@ return (
       </table>
     </div>
   </div>
-)
+);
 }
