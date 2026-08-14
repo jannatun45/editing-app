@@ -2,6 +2,8 @@ import type { Route } from "./+types/home";
 import React, { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import Table from "../components/Table";
+import Navbar from "~/components/Navbar";
+import NavLink  from "~/components/Navlink";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -121,6 +123,7 @@ export default function Home() {
   }
   return (
     <div className="min-h-screen bg-gray-200">
+      <Navbar />
       {/* Workspace */}
       <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10 overflow-hidden">
         <div
