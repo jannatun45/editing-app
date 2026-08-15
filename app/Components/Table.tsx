@@ -1,6 +1,6 @@
 import { tableFeatures, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { teamsData,type Teams } from '~/Data/LeagueTable'
+import { teamsData,type Teams } from '~/data/LeagueTable'
 
 // 3. New in v9: declare which features this table uses (none yet)
 const features = tableFeatures({})

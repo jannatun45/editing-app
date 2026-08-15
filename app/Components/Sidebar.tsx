@@ -152,7 +152,7 @@ export default function Navbar() {
       `}
     >
       {/* Header */}
-      <header className="flex h-[72px] shrink-0 items-center border-b border-white/10">
+      <header className="flex h-18 shrink-0 items-center border-b border-white/10">
         <button
           type="button"
           onClick={() => setCollapsed(!collapsed)}

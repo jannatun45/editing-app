@@ -2,8 +2,8 @@ import type { Route } from "./+types/home";
 import React, { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import Table from "../components/Table";
-import Navbar from "~/components/Navbar";
-import NavLink  from "~/components/Navlink";
+import Navbar from "~/components/Sidebar";
+import Aside from "~/components/Aside";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -123,9 +123,12 @@ export default function Home() {
   }
   return (
     <div className="min-h-screen bg-gray-200">
+
+      {/* NAVBAR */}
       <Navbar />
-      {/* Workspace */}
-      <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-10 overflow-hidden">
+
+      {/* WORKSPACE */}
+      <div className="min-h-[calc(100vh-64px)] flex justify-center items-start p-6  overflow-hidden">
         <div
           style={{
             width: "1080px",
@@ -140,9 +143,8 @@ export default function Home() {
             className="relative w-270 h-[1920px] bg-white px-12 py-24 text-gray-600 shadow-lg rounded-tl-3xl  "
           >
             <div className="flex h-full w-full flex-col items-center">
-              <div className="mb-8 flex flex-col items-center">
+              <div className="mb-20 flex flex-col items-center">
                 <h1 className="text-6xl font-bold">Klasemen Pekan 21</h1>
-
                 <h1 className="text-5xl">BRI Liga 1 2026/2027</h1>
               </div>
               <Table />
@@ -177,6 +179,9 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      {/* ASIDE */}
+      <Aside />
     </div>
   );
 }

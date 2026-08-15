@@ -7,4 +7,6 @@ import {
 export default [
   index("routes/home.tsx"),
   route("profile", "routes/profile.tsx"),
+
+  route("*", "routes/not-found.tsx"),
 ] satisfies RouteConfig;
