@@ -1,3 +1,4 @@
+import MainLayout from "~/components/templates/MainLayout";
 import type { Route } from "./+types/profile";
 
 export function meta({}: Route.MetaArgs) {
@@ -9,7 +10,8 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Profile() {
   return (
-    <div className="min-h-screen bg-gray-100 p-10">
+    <MainLayout>
+      <div className="min-h-screen  p-10">
       <h1 className="text-4xl font-bold">
         Profile
       </h1>
@@ -18,5 +20,6 @@ export default function Profile() {
         Ini adalah halaman profile.
       </p>
     </div>
+    </MainLayout>
   );
 }

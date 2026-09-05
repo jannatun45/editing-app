@@ -8,13 +8,14 @@ export default function MainLayout({
   children,
 }: MainLayoutProps) {
   return (
-    <div className="min-h-screen flex justify-end items-center overflow-hidden mr-2 text-white">
+    <div className="min-h-screen flex justify-end items-center overflow-hidden text-white">
 
       {/* sidebar */}
       <Sidebar/>
 
       {/* Container utama */}
-      <div className="w-[1400px] min-h-screen bg-red-500">
+      <div className="w-[1485px] min-h-screen">
+
         {/* Isi halaman */}
         <main className="min-h-screen">
           {children}
