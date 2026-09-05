@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   Lock,
   ChevronDown,
+  LayoutFreeform,
 } from "lucide-react";
 import { NavLink } from "react-router";
 
@@ -32,9 +33,9 @@ const menuItems: MenuItem[] = [
     path: "/",
   },
   {
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    path: "/dashboard",
+    label: "Standing",
+    icon: LayoutFreeform,
+    path: "/standing",
   },
   {
     label: "Settings",
@@ -131,15 +132,14 @@ export default function Navbar() {
     <aside
       className={`
         fixed
-        top-6
-        left-6
-        bottom-6
+        top-0
+        left-0
+        bottom-0
         z-50
         flex
         flex-col
         gap-2
-        rounded-2xl
-        border
+        border-r-2
         border-white/10
         bg-black/40
         p-4
@@ -162,14 +162,31 @@ export default function Navbar() {
         </button>
 
         {!collapsed && (
-          <div className="flex items-center">
-            <span className="text-lg font-bold">My Editor</span>
+          <div className="relative leading-tight ">
+            <div
+              className="absolute text-xs -top-2 left-0.5 lowercase"
+              style={{ fontFamily: "Alex Brush, cursive" }}
+            >
+              My
+            </div>
+            <div
+              className="text-2xl font-bold tracking-wider uppercase "
+              style={{ fontFamily: "Orbitron, sans-serif" }}
+            >
+              profile
+            </div>
+            <div
+              className="absolute text-gray-400 -bottom-1 right-0  "
+              style={{ fontFamily: "Alex Brush, cursive" }}
+            >
+              dark impulsive
+            </div>
           </div>
         )}
       </header>
 
       {/* Menu */}
-      <ul className="grid w-full list-none gap-1 p-0">
+      <ul className="grid w-full list-none gap-1 p-0 ">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeMenu === item.label;
@@ -191,7 +208,6 @@ export default function Navbar() {
                   rounded-md
                   px-4
                   text-left
-                  text-base
                   font-normal
                   transition
                   duration-200
@@ -231,8 +247,8 @@ export default function Navbar() {
                   gap-4
                   rounded-md
                   px-4
+                  text-sm
                   text-left
-                  text-base
                   font-normal
                   transition
                   duration-200
@@ -271,7 +287,7 @@ export default function Navbar() {
                       rounded-md
                       pl-[52px]
                       text-left
-                      text-sm
+                      text-xs
                       text-white/90
                       hover:bg-black/10
                       ${isActive ? "bg-black/30" : ""}
