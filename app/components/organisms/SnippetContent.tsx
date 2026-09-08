@@ -4,7 +4,7 @@ import ArticleHeader from "../molecules/ArticleHeader";
 import ArticleSection from "../molecules/ArticleSection";
 import CodeBlock from "../molecules/CodeBlock";
 
-export default function ArticleContent() {
+export default function SnippetContent() {
   return (
     <article>
       <ArticleHeader

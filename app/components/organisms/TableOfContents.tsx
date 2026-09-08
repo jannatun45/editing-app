@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import TableOfContentsItem from "../molecules/TableOfContentsItem";
+import type { Topic } from "~/types/topic";
 
-const topics = [
-  { id: "introduction", label: "Introduction" },
-  { id: "usestate", label: "useState" },
-  { id: "useeffect", label: "useEffect" },
-  { id: "conditional-rendering", label: "Conditional Rendering" },
-  { id: "event-handler", label: "Event Handler" },
-];
+type TableOfContentProps = {
+  topics: Topic[];
+};
 
-export default function TableOfContents() {
+export default function TableOfContents({ topics }: TableOfContentProps) {
   // Menyimpan ID section yang sedang aktif
   const [activeId, setActiveId] = useState("introduction");
 

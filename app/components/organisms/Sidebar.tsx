@@ -1,136 +1,8 @@
+import { ChevronDown, Menu } from "lucide-react";
 import { useState } from "react";
-import {
-  Menu,
-  Home,
-  LayoutDashboard,
-  Settings,
-  FolderPlus,
-  User,
-  Bell,
-  ShoppingCart,
-  Lock,
-  ChevronDown,
-  LayoutFreeform,
-  List,
-  BookOpenText,
-  FileQuestionMark,
-} from "lucide-react";
 import { NavLink, useLocation } from "react-router";
-
-type SubMenuItem = {
-  label: string;
-  path: string;
-};
-
-type MenuItem = {
-  label: string;
-  icon: React.ElementType;
-  path?: string;
-  children?: SubMenuItem[];
-};
-
-const menuItems: MenuItem[] = [
-  {
-    label: "Home",
-    icon: Home,
-    path: "/",
-  },
-  {
-    label: "List check",
-    icon: List,
-    path: "/list",
-  },
-  {
-    label: "belajar",
-    icon: BookOpenText,
-    path: "/belajar",
-    children: [
-      {
-        label: "snippet",
-        path: "/belajar/snippet",
-      },
-    ],
-  },
-  {
-    label: "pertanyaan",
-    icon: FileQuestionMark,
-    path: "/pertanyaan",
-  },
-  {
-    label: "Standing",
-    icon: LayoutFreeform,
-    path: "/standing",
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    children: [
-      {
-        label: "Display",
-        path: "/settings/display",
-      },
-      {
-        label: "Appearance",
-        path: "/settings/appearance",
-      },
-      {
-        label: "Preferences",
-        path: "/settings/preferences",
-      },
-    ],
-  },
-  {
-    label: "Create",
-    icon: FolderPlus,
-    children: [
-      {
-        label: "Article",
-        path: "/create/article",
-      },
-      {
-        label: "Document",
-        path: "/create/document",
-      },
-      {
-        label: "Video",
-        path: "/create/video",
-      },
-      {
-        label: "Presentation",
-        path: "/create/presentation",
-      },
-    ],
-  },
-  {
-    label: "Profile",
-    icon: User,
-    children: [
-      {
-        label: "Avatar",
-        path: "/profile/avatar",
-      },
-      {
-        label: "Theme",
-        path: "/profile/theme",
-      },
-    ],
-  },
-  {
-    label: "Notifications",
-    icon: Bell,
-    path: "/notifications",
-  },
-  {
-    label: "Products",
-    icon: ShoppingCart,
-    path: "/products",
-  },
-  {
-    label: "Account",
-    icon: Lock,
-    path: "/account",
-  },
-];
+import { menuItems } from "~/data/menu-items";
+import type { MenuItem } from "~/types/sidebar/menuItems";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -252,7 +124,7 @@ export default function Navbar() {
                           className={`
                           transition-transform
                           duration-300
-                          ${isActive ? "" : ""}
+                          ${isActive ? "rotate" : ""}
                         `}
                         />
                       )}

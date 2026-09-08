@@ -12,7 +12,7 @@ export default function Checklist() {
   const [items, setItems] = useState<ChecklistItem[]>([
     {
       id: 1,
-      title: "Install React Router",
+      title: "sebenarnya props itu gunanya apa sih",
       completed: false,
     },
     {
