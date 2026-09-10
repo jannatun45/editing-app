@@ -42,7 +42,7 @@ export default function Navbar() {
         backdrop-blur-xl
         transition-all
         duration-400
-        ${collapsed ? "w-20" : "w-65"}
+        ${collapsed ? "w-20" : "w-[15.34%]"}
       `}
     >
       {/* Header */}

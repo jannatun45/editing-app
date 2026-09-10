@@ -7,13 +7,9 @@ import { snippetTopics } from "~/data/topics/snippets";
 
 export default function Snippets() {
   return (
-    // Layout global aplikasi
-    <MainLayout>
-      {/* Layout khusus halaman artikel */}
-      <ArticleLayout topics={snippetTopics}>
-        {/* Isi artikel */}
-        <SnippetContent />
-      </ArticleLayout>
-    </MainLayout>
+    <ArticleLayout topics={snippetTopics}>
+      {/* Isi artikel */}
+      <SnippetContent />
+    </ArticleLayout>
   );
 }
