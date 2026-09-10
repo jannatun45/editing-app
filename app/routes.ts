@@ -7,6 +7,7 @@ export default [
   route("list", "routes/list.tsx"),
   route("belajar/snippet", "routes/belajar/snippet.tsx"),
   route("playground", "routes/playground.tsx"),
+  route("pertanyaan", "routes/pertanyaan.tsx"),
 
   route("*", "routes/not-found.tsx"),
 ] satisfies RouteConfig;

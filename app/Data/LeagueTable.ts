@@ -1,21 +1,7 @@
-
-// 1. Define the shape of your data
-export type Teams = {
-  position: number,
-  name: string,
-  district: string,
-  points: number,
-  played: number,
-  wins: number,
-  draws: number,
-  losses: number,
-  goalsFor: number,
-  goalsAgainst: number,
-  goalDifference: number,
-}
+import type { Teams } from "~/types/teams";
 
 // 2. Give your data a stable reference (module scope, useState, useQuery, etc.)
-export  const teamsData: Teams[] =  [
+export const teamsData: Teams[] = [
   {
     position: 1,
     name: "Persib Bandung",
