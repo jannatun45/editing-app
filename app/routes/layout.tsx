@@ -1,12 +1,12 @@
 import { NavLink } from "react-router";
-import Sidebar from "../organisms/Sidebar";
+import Sidebar from "~/components/organisms/Sidebar";
 import { useEffect } from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
-export default function MainLayout({ children }: MainLayoutProps) {
+export default function Layout({ children }: MainLayoutProps) {
   useEffect(() => {
     console.log("Lebar browser:", window.innerWidth);
     console.log("Tinggi browser:", window.innerHeight);

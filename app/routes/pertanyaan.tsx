@@ -1,33 +1,158 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../components/templates/MainLayout";
-import type { Clubs } from "../types/api/clubs";
-import { getClubs } from "~/services/productServices";
+import { getClubs } from "~/services/clubsServices";
+import type { Club } from "~/types/api/clubs";
+import { tableFeatures, useTable, type ColumnDef } from "@tanstack/react-table";
+
+// 2. Declare which features this table uses / Sebutkan fitur-fitur apa saja yang digunakan oleh tabel ini
+const features = tableFeatures({});
+
+// 3. Define your columns /  Selecting a column / menentukan kolom
+const columns: Array<ColumnDef<typeof features, Club>> = [
+  {
+    accessorKey: "name_club",
+    header: "Club",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "points",
+    header: "pts",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "match",
+    header: "M",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "win",
+    header: "W",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "lose",
+    header: "L",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goals_for",
+    header: "GF",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goals_againts",
+    header: "GA",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goal_difference",
+    header: "GD",
+    cell: (info) => info.getValue(),
+  },
+];
 
 export default function Pertanyaan() {
-  const [clubs, setClubs] = useState<Clubs[]>([]);
+  // 4. data awal berasal dari API
+  const [data, setData] = useState<Club[]>([]);
 
+  // 5. ambil data dari express api
   useEffect(() => {
     getClubs()
       .then((data) => {
-        setClubs(data);
+        setData(data);
       })
       .catch((error) => {
         console.error(error);
       });
   }, []);
 
+  // 5. Create the table instance
+  const table = useTable({
+    key: "club-table",
+    features,
+    columns,
+    data,
+  });
+
   return (
     <MainLayout>
-      <section className="flex min-h-screen items-center justify-center">
-        <h1>THIS IS THE QUESTION PAGE.</h1>
-        {clubs.map((club) => (
-          <div key={club._id}>
-            <h2>{club.name_club}</h2>
-            <p>{club.stadium}</p>
-            <p>{club.city}</p>
-          </div>
-        ))}
-      </section>
+      <div className="overflow-hidden rounded-tl-2xl shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className={`whitespace-nowrap border-b border-gray-200 px-4 py-3 text-xl font-semibold uppercase tracking-wide text-gray-500 ${
+                        header.column.id === "name"
+                          ? "text-left"
+                          : "text-center"
+                      }`}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <table.FlexRender header={header} />
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+
+            <tbody className="divide-y divide-gray-100">
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="transition-colors hover:bg-gray-200"
+                >
+                  {row.getAllCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`whitespace-nowrap px-4 py-4 text-2xl text-gray-700 ${
+                        cell.column.id === "name" ? "text-left" : "text-center"
+                      }`}
+                    >
+                      <table.FlexRender cell={cell} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {/* <section>
+        <h1>Club Standing</h1>
+
+        <table>
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id}>
+                    {header.isPlaceholder ? null : (
+                      <table.FlexRender header={header} />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id}>
+                {row.getAllCells().map((cell) => (
+                  <td key={cell.id}>
+                    <table.FlexRender cell={cell} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section> */}
     </MainLayout>
   );
 }
