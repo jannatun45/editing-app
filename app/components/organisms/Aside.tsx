@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useState } from "react";
 
-  type Player = {
+type Player = {
   name: string;
   team: string;
   value: number;
@@ -82,47 +82,39 @@ const topAssist: Player[] = [
   },
 ];
 export default function Aside() {
-const [topScore, setTopScore] = useState<Player[]>(initialTopScore);
-const [showScoreModal, setShowScoreModal] = useState(false);
+  const [topScore, setTopScore] = useState<Player[]>(initialTopScore);
+  const [showScoreModal, setShowScoreModal] = useState(false);
 
-const [scoreForm, setScoreForm] = useState({
-  name: "",
-  team: "",
-  value: "",
-});
-
-
+  const [scoreForm, setScoreForm] = useState({
+    name: "",
+    team: "",
+    value: "",
+  });
 
   return (
     <aside
       className="
-    w-[650px]
-    fixed
-    top-6
-    right-6
-    bottom-6
-    z-50
-    flex
-    flex-col
-    gap-2
-    p-4
+      w-[650px]
+      fixed
+      top-6
+      right-6
+      bottom-6
+      z-50
+      flex
+      flex-col
+      gap-2
+      p-4
     text-white
-  "
+    "
     >
-
       {/* JADWAL PERTANDINGAN */}
       <div className="w-full overflow-hidden rounded-lg bg-black/40">
-
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <div>
-            <h2 className="text-lg font-bold">
-              Jadwal Pertandingan
-            </h2>
+            <h2 className="text-lg font-bold">Jadwal Pertandingan</h2>
 
-            <p className="text-xs text-gray-500">
-              Pertandingan mendatang
-            </p>
+            <p className="text-xs text-gray-500">Pertandingan mendatang</p>
           </div>
 
           <span className="rounded-md bg-white/10 px-3 py-1 text-xs text-gray-400">
@@ -132,9 +124,7 @@ const [scoreForm, setScoreForm] = useState({
 
         {/* Match List */}
         <div className="flex flex-col">
-
           {matches.map((match, index) => (
-
             <div
               key={`${match.date}-${match.time}-${index}`}
               className="
@@ -146,7 +136,6 @@ const [scoreForm, setScoreForm] = useState({
                 hover:bg-white/5
               "
             >
-
               {/* Date */}
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -160,7 +149,6 @@ const [scoreForm, setScoreForm] = useState({
 
               {/* Match */}
               <div className="flex items-center justify-between">
-
                 {/* Home */}
                 <div className="flex w-[35%] items-center justify-end gap-3">
                   <span className="text-right text-sm font-semibold text-gray-300">
@@ -193,13 +181,9 @@ const [scoreForm, setScoreForm] = useState({
                     {match.away}
                   </span>
                 </div>
-
               </div>
-
             </div>
-
           ))}
-
         </div>
       </div>
       <div className="flex gap-2">

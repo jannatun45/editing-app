@@ -1,119 +1,13 @@
+import { ChevronDown, Menu } from "lucide-react";
 import { useState } from "react";
-import {
-  Menu,
-  Home,
-  LayoutDashboard,
-  Settings,
-  FolderPlus,
-  User,
-  Bell,
-  ShoppingCart,
-  Lock,
-  ChevronDown,
-  LayoutFreeform,
-} from "lucide-react";
-import { NavLink } from "react-router";
-
-type SubMenuItem = {
-  label: string,
-  path: string
-}
-
-type MenuItem = {
-  label: string;
-  icon: React.ElementType;
-  path?: string,
-  children?: SubMenuItem[];
-};
-
-const menuItems: MenuItem[] = [
-  {
-    label: "Home",
-    icon: Home,
-    path: "/",
-  },
-  {
-    label: "Standing",
-    icon: LayoutFreeform,
-    path: "/standing",
-  },
-  {
-    label: "Settings",
-    icon: Settings,
-    children: [
-      {
-        label: "Display",
-        path: "/settings/display",
-      },
-      {
-        label: "Appearance",
-        path: "/settings/appearance",
-      },
-      {
-        label: "Preferences",
-        path: "/settings/preferences",
-      },
-    ],
-  },
-  {
-    label: "Create",
-    icon: FolderPlus,
-    children: [
-      {
-        label: "Article",
-        path: "/create/article",
-      },
-      {
-        label: "Document",
-        path: "/create/document",
-      },
-      {
-        label: "Video",
-        path: "/create/video",
-      },
-      {
-        label: "Presentation",
-        path: "/create/presentation",
-      },
-    ],
-  },
-  {
-    label: "Profile",
-    icon: User,
-    children: [
-      {
-        label: "Avatar",
-        path: "/profile/avatar",
-      },
-      {
-        label: "Theme",
-        path: "/profile/theme",
-      },
-    ],
-  },
-  {
-    label: "Notifications",
-    icon: Bell,
-    path: "/notifications",
-
-  },
-  {
-    label: "Products",
-    icon: ShoppingCart,
-    path: "/products",
-
-  },
-  {
-    label: "Account",
-    icon: Lock,
-    path: "/account",
-
-  },
-];
+import { NavLink, useLocation } from "react-router";
+import { menuItems } from "~/data/menu-items";
+import type { MenuItem } from "~/types/sidebar/menuItems";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   function handleMenuClick(item: MenuItem) {
     if (!item.children) {
@@ -189,7 +83,10 @@ export default function Navbar() {
       <ul className="grid w-full list-none gap-1 p-0 ">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeMenu === item.label;
+          const hasActiveChild =
+            item.children?.some((child) => location.pathname === child.path) ??
+            false;
+          const isActive = activeMenu === item.label || hasActiveChild;
 
           return (
             <li key={item.label}>
@@ -227,7 +124,7 @@ export default function Navbar() {
                           className={`
                           transition-transform
                           duration-300
-                          ${isActive ? "rotate-180" : ""}
+                          ${isActive ? "rotate" : ""}
                         `}
                         />
                       )}
@@ -238,7 +135,7 @@ export default function Navbar() {
                 /* MENU YANG LANGSUNG NAVIGASI */
                 <NavLink
                   to={item.path!}
-                  className={`
+                  className={({ isActive }) => `
                   relative
                   flex
                   h-[50px]
@@ -253,8 +150,7 @@ export default function Navbar() {
                   transition
                   duration-200
                   hover:bg-black/10
-                  ${isActive ? "bg-black/30" : ""}
-                `}
+                  ${isActive && "bg-black/30"}`}
                 >
                   <Icon size={20} className="shrink-0" />
 
@@ -266,12 +162,12 @@ export default function Navbar() {
               {item.children && !collapsed && (
                 <div
                   className={`
-              grid
-              overflow-hidden
-              transition-all
-              duration-500
-              ${activeMenu === item.label ? "max-h-60" : "max-h-0"}
-            `}
+                  grid
+                  overflow-hidden
+                  transition-all
+                  duration-500
+                  ${activeMenu === item.label ? "max-h-60" : "max-h-0"}
+                `}
                 >
                   <ul className="grid">
                     {item.children.map((child) => (
@@ -279,31 +175,30 @@ export default function Navbar() {
                         <NavLink
                           to={child.path}
                           className={({ isActive }) => `
-                      relative
-                      flex
-                      h-[50px]
-                      w-full
-                      items-center
-                      rounded-md
-                      pl-[52px]
-                      text-left
-                      text-xs
-                      text-white/90
-                      hover:bg-black/10
-                      ${isActive ? "bg-black/30" : ""}
-                    `}
+                          relative
+                          flex
+                          h-[50px]
+                          w-full
+                          items-center
+                          rounded-md
+                          pl-[52px]
+                          text-left
+                          text-xs
+                          text-white/90
+                          hover:bg-black/10
+                          ${isActive ? "bg-black/30" : ""}
+                        `}
                         >
                           <span
                             className="
-                        absolute
-                        left-6
-                        top-1/2
-                        h-[5px]
-                        w-[5px]
-                        -translate-y-1/2
-                        rounded-full
-                        bg-white/35
-                      "
+                            absolute
+                            left-6
+                            top-1/2
+                            h-[5px]
+                            w-[5px]
+                            -translate-y-1/2
+                            rounded-full
+                            bg-white/35"
                           />
 
                           {child.label}
@@ -313,55 +208,6 @@ export default function Navbar() {
                   </ul>
                 </div>
               )}
-              {/* {item.children && !collapsed && (
-                <div
-                  className={`
-                    grid
-                    overflow-hidden
-                    transition-all
-                    duration-500
-                    ${isActive ? "max-h-60" : "max-h-0"}
-                  `}
-                >
-                  <ul className="grid">
-                    {item.children.map((child) => (
-                      <li key={child.path}>
-                        <button
-                          type="button"
-                          className="
-                            relative
-                            flex
-                            h-[50px]
-                            w-full
-                            items-center
-                            rounded-md
-                            pl-[52px]
-                            text-left
-                            text-sm
-                            text-white/90
-                            hover:bg-black/10
-                          "
-                        >
-                          <span
-                            className="
-                              absolute
-                              left-6
-                              top-1/2
-                              h-[5px]
-                              w-[5px]
-                              -translate-y-1/2
-                              rounded-full
-                              bg-white/35
-                            "
-                          />
-
-                          {child.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )} */}
             </li>
           );
         })}
