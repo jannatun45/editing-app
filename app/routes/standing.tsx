@@ -68,7 +68,7 @@ export default function Standing() {
 
   return (
     // Template utama aplikasi.
-    <MainLayout>
+    <>
       {/* Organism utama editor canvas. */}
       <DesignCanvas
         paperRef={paperRef}
@@ -82,6 +82,6 @@ export default function Standing() {
 
       {/* Organism sidebar editor. */}
       <Aside />
-    </MainLayout>
+    </>
   );
 }

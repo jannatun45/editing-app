@@ -10,16 +10,10 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Profile() {
   return (
-    <MainLayout>
-      <div className="min-h-screen  p-10">
-      <h1 className="text-4xl font-bold">
-        Profile
-      </h1>
+    <div className="min-h-screen  p-10">
+      <h1 className="text-4xl font-bold">Profile</h1>
 
-      <p className="mt-4 text-gray-600">
-        Ini adalah halaman profile.
-      </p>
+      <p className="mt-4 text-gray-600">Ini adalah halaman profile.</p>
     </div>
-    </MainLayout>
   );
 }
