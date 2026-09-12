@@ -22,7 +22,6 @@ export default function TableOfContentsItem({
           pl-4
           text-sm
           transition
-
           ${
             active
               ? "border-white text-white font-medium"

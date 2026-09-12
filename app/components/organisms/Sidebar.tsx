@@ -2,7 +2,7 @@ import { ChevronDown, Menu } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { menuItems } from "~/data/menu-items";
-import type { MenuItem } from "~/types/sidebar/menuItems";
+import type { MenuItem } from "~/types/sidenav/menuItems";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function Navbar() {
         gap-2
         border-r-2
         border-white/10
-        bg-black/40
+        bg-zinc-900
         p-4
         text-white
         shadow-xl

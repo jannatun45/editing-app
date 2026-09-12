@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import TopicSidebar from "../organisms/TopicSidebar";
-import type { TopicGroup } from "~/types/topic";
+import SideNav from "../organisms/SideNav";
+import type { TopicGroup } from "~/types/sidenav/topicTypes";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,7 +19,7 @@ export default function MainLayout({ children, topics }: MainLayoutProps) {
           {children}
         </main>
         {/* Topic hanya muncul kalau diberikan */}
-        {topics && <TopicSidebar topics={topics} />}
+        {topics && <SideNav topics={topics} />}
       </div>
     </div>
   );

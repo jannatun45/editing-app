@@ -15,7 +15,7 @@ import {
   MonitorSmartphone,
   Coffee,
 } from "lucide-react";
-import type { MenuItem } from "~/types/sidebar/menuItems";
+import type { MenuItem } from "~/types/sidenav/menuItems";
 
 export const menuItems: MenuItem[] = [
   {

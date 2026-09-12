@@ -8,9 +8,9 @@ export default function Layout() {
       <Sidebar />
 
       {/* Container utama */}
-      <main className="w-[75%] pr-36 min-h-screen">
+      <div className="w-[75%] pr-36 min-h-screen ">
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

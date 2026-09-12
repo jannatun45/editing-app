@@ -1,11 +1,11 @@
 import TopicGroup from "../molecules/TopicGroup";
-import type { TopicGroup as TopicGroupType } from "~/types/topic";
+import type { TopicGroup as TopicGroupType } from "~/types/sidenav/topicTypes";
 
-interface TopicSidebarProps {
+interface SideNavProps {
   topics: TopicGroupType[];
 }
 
-export default function TopicSidebar({ topics }: TopicSidebarProps) {
+export default function SideNav({ topics }: SideNavProps) {
   return (
     <aside className="relative">
       {topics.map((group) => (
