@@ -13,8 +13,9 @@ import {
   BookOpenText,
   FileQuestionMark,
   MonitorSmartphone,
+  Coffee,
 } from "lucide-react";
-import type { MenuItem } from "~/types/sidebar/menuItems";
+import type { MenuItem } from "~/types/sidenav/menuItems";
 
 export const menuItems: MenuItem[] = [
   {
@@ -28,13 +29,18 @@ export const menuItems: MenuItem[] = [
     path: "/list",
   },
   {
+    label: "coffee",
+    icon: Coffee,
+    path: "/coffee",
+  },
+  {
     label: "belajar",
     icon: BookOpenText,
-    path: "/belajar",
+    path: "/learning",
     children: [
       {
         label: "snippet",
-        path: "/belajar/snippet",
+        path: "learning/snippet",
       },
     ],
   },

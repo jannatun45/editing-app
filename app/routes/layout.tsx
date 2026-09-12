@@ -8,10 +8,8 @@ export default function Layout() {
       <Sidebar />
 
       {/* Container utama */}
-      <div className="w-[83%] min-h-screen">
-        <div className="min-h-screen">
-          <Outlet />
-        </div>
+      <div className="w-[75%] pr-36 min-h-screen ">
+        <Outlet />
       </div>
     </div>
   );
