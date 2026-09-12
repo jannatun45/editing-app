@@ -26,6 +26,7 @@ import useCanvasElements from "~/hooks/useCanvasElements";
 
 // Mengimpor utility untuk download PNG.
 import { downloadImage } from "~/utils/downloadImage";
+import Container from "~/components/templates/Container";
 
 // Mengatur metadata halaman.
 export function meta({}: Route.MetaArgs) {
@@ -68,20 +69,22 @@ export default function Standing() {
 
   return (
     // Template utama aplikasi.
-    <>
-      {/* Organism utama editor canvas. */}
-      <DesignCanvas
-        paperRef={paperRef}
-        scale={scale}
-        elements={elements}
-        onMouseDown={handleMouseDown}
-      />
+    <Container>
+      <div className="bg-red-400">
+        {/* Organism utama editor canvas. */}
+        <DesignCanvas
+          paperRef={paperRef}
+          scale={scale}
+          elements={elements}
+          onMouseDown={handleMouseDown}
+        />
 
-      {/* Molecule yang berisi tombol editor. */}
-      <CanvasActions onAddText={addText} onDownload={handleDownload} />
+        {/* Molecule yang berisi tombol editor. */}
+        <CanvasActions onAddText={addText} onDownload={handleDownload} />
+      </div>
 
       {/* Organism sidebar editor. */}
       <Aside />
-    </>
+    </Container>
   );
 }

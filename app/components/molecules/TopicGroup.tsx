@@ -1,13 +1,12 @@
-import { log } from "console";
 import TopicItem from "../atoms/TopicItem";
-import type { TopicGroup as TopicGroupType } from "~/types/sidenav/topicTypes";
+import type { TopicGroup as TopicGroupType } from "~/types/sidenav/topicGrupTypes";
 
 interface TopicGroupProps {
   group: TopicGroupType;
 }
 
 export default function TopicGroup({ group }: TopicGroupProps) {
-  log("group in topic group -> ", group);
+  console.log("group in sidenav group -> ", group);
   return (
     <div className="">
       <h3 className="my-2 text-xs font-bold uppercase text-gray-600">

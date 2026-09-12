@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import SideNav from "../organisms/SideNav";
-import type { TopicGroup } from "~/types/sidenav/topicTypes";
+import SideNav from "../organisms/SideNavGroup";
+import type { TopicGroup } from "~/types/sidenav/topicGrupTypes";
 
 interface MainLayoutProps {
   children: ReactNode;

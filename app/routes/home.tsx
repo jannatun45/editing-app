@@ -1,13 +1,14 @@
 import H2 from "~/components/atoms/H2";
 import P from "~/components/atoms/P";
-import SideNav from "~/components/organisms/SideNav";
+import SideNavGroup from "~/components/organisms/SideNavGroup";
 import MainLayout from "~/components/templates/MainLayout";
 import { homeData } from "~/data/sidenav/homeData";
 import { index } from "@react-router/dev/routes";
+import Container from "~/components/templates/Container";
 
 export default function Home() {
   return (
-    <div className="bg-zinc-950 pl-10 py-8 grid grid-cols-[1fr_198px] gap-6 text-zinc-500">
+    <Container>
       <main className="">
         <div className="text-center">
           <p className="mb-4 text-sm uppercase tracking-[0.3em]  text-gray-400">
@@ -89,7 +90,7 @@ export default function Home() {
           </P>
         </section>
       </main>
-      <SideNav topics={homeData} />
-    </div>
+      <SideNavGroup topics={homeData} />
+    </Container>
   );
 }

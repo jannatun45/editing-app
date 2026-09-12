@@ -1,6 +1,6 @@
 type TableOfContentsItemProps = {
   id: string;
-  label: string;
+  title: string;
 
   // Menentukan apakah item sedang aktif
   active: boolean;
@@ -8,7 +8,7 @@ type TableOfContentsItemProps = {
 
 export default function TableOfContentsItem({
   id,
-  label,
+  title,
   active,
 }: TableOfContentsItemProps) {
   return (
@@ -29,7 +29,7 @@ export default function TableOfContentsItem({
           }
         `}
       >
-        {label}
+        {title}
       </a>
     </li>
   );

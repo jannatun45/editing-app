@@ -1,4 +1,4 @@
-import type { TopicGroup } from "~/types/sidenav/topicTypes";
+import type { TopicGroup } from "~/types/sidenav/topicGrupTypes";
 
 export const homeData: TopicGroup[] = [
   {

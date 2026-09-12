@@ -1,8 +1,7 @@
-// export type homeType = {
-//   title: string;
-//   href: string;
-//   label: string;
-// };
+export type TopicHome = {
+  title: string;
+  id: string;
+};
 
 export type TopicItem = {
   title: string;
