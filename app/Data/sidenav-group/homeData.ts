@@ -5,11 +5,11 @@ export const homeData: TopicGroup[] = [
     title: "crud",
     items: [
       {
-        title: "add",
+        label: "add",
         href: "#add",
       },
       {
-        title: "post",
+        label: "post",
         href: "#post",
       },
     ],
@@ -18,11 +18,11 @@ export const homeData: TopicGroup[] = [
     title: "testing",
     items: [
       {
-        title: "testing",
+        label: "testing",
         href: "#testing",
       },
       {
-        title: "uye",
+        label: "uye",
         href: "#uye",
       },
     ],

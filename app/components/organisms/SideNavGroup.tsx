@@ -6,7 +6,6 @@ interface SideNavProps {
 }
 
 export default function SideNavGroup({ topics }: SideNavProps) {
-  console.log("topic in sidenav group -> ", topics);
   return (
     <aside className="relative block">
       <div className="fixed ">

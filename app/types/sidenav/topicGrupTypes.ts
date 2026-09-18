@@ -4,7 +4,7 @@ export type TopicHome = {
 };
 
 export type TopicItem = {
-  title: string;
+  label: string;
   href: string;
 };
 

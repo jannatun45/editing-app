@@ -70,7 +70,7 @@ export default function Standing() {
   return (
     // Template utama aplikasi.
     <Container>
-      <div className="bg-red-400">
+      <div className="">
         {/* Organism utama editor canvas. */}
         <DesignCanvas
           paperRef={paperRef}
