@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import TableOfContentsItem from "../molecules/TableOfContentsItem";
-import type { Topic } from "~/types/topic";
+import type { TopicHome } from "~/types/sidenav/topicGrupTypes";
 
 type TableOfContentProps = {
-  topics: Topic[];
+  topics: TopicHome[];
 };
 
-export default function TableOfContents({ topics }: TableOfContentProps) {
+export default function SideNav({ topics }: TableOfContentProps) {
   // Menyimpan ID section yang sedang aktif
   const [activeId, setActiveId] = useState("introduction");
 
@@ -41,22 +41,24 @@ export default function TableOfContents({ topics }: TableOfContentProps) {
   }, []);
 
   return (
-    <nav>
-      {/* Judul daftar isi */}
-      <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
-        On this page
-      </h2>
+    <aside className="relative">
+      <div className="fixed">
+        {/* Judul daftar isi */}
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+          On this page
+        </h2>
 
-      <ul className="space-y-2 border-l border-white/10">
-        {topics.map((topic) => (
-          <TableOfContentsItem
-            key={topic.id}
-            id={topic.id}
-            label={topic.label}
-            active={activeId === topic.id}
-          />
-        ))}
-      </ul>
-    </nav>
+        <ul className="space-y-2 border-l border-white/10">
+          {topics.map((topic) => (
+            <TableOfContentsItem
+              key={topic.id}
+              id={topic.id}
+              title={topic.title}
+              active={activeId === topic.id}
+            />
+          ))}
+        </ul>
+      </div>
+    </aside>
   );
 }
