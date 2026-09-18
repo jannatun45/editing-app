@@ -1,9 +1,7 @@
 import H2 from "~/components/atoms/H2";
 import P from "~/components/atoms/P";
 import SideNavGroup from "~/components/organisms/SideNavGroup";
-import MainLayout from "~/components/templates/MainLayout";
-import { homeData } from "~/data/sidenav/homeData";
-import { index } from "@react-router/dev/routes";
+import { homeData } from "~/data/sidenav-group/homeData";
 import Container from "~/components/templates/Container";
 
 export default function Home() {

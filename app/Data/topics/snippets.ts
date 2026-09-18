@@ -1,24 +1,24 @@
-import type { Topic } from "~/types/topic";
+import type { TopicHome } from "~/types/sidenav/topicGrupTypes";
 
-export const snippetTopics: Topic[] = [
+export const snippetTopics: TopicHome[] = [
   {
     id: "introduction",
-    label: "Introduction",
+    title: "Introduction",
   },
   {
     id: "usestate",
-    label: "useState",
+    title: "useState",
   },
   {
     id: "useeffect",
-    label: "useEffect",
+    title: "useEffect",
   },
   {
     id: "conditional-rendering",
-    label: "Conditional Rendering",
+    title: "Conditional Rendering",
   },
   {
     id: "event-handler",
-    label: "Event Handler",
+    title: "Event Handler",
   },
 ];
