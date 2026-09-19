@@ -15,7 +15,10 @@ export default function ArticleSection({
 }: ArticleSectionProps) {
   return (
     // id digunakan sebagai target anchor dari Table of Contents
-    <section id={id} className="mb-6 scroll-mt-8">
+    <section
+      id={id}
+      className="mb-16 scroll-mt-8 pb-2 border-b border-zinc-800"
+    >
       {/* Judul setiap bab */}
       <h2 className="rounded-tl-md rounded-br-md mb-4 w-fit px-3 py-0.5 bg-zinc-600 text-zinc-950 text-sm font-bold">
         {title}

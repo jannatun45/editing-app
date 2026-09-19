@@ -1,7 +1,7 @@
 import { ChevronDown, Menu } from "lucide-react";
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
-import { menuItems } from "~/data/menu-items";
+import { menuItems } from "~/data/menu_sidebar";
 import type { MenuItem } from "~/types/sidenav/menuItems";
 
 export default function Navbar() {

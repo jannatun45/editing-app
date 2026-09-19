@@ -1,5 +1,4 @@
-import MainLayout from "~/components/templates/MainLayout";
-import type { Route } from "./+types/profile";
+import type { Route } from "../+types/root";
 
 export function meta({}: Route.MetaArgs) {
   return [
