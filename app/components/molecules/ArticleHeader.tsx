@@ -20,7 +20,7 @@ export default function ArticleHeader({
       </p>
 
       {/* Judul utama artikel */}
-      <h1 className="text-5xl font-black uppercase tracking-tight">{title}</h1>
+      <h1 className="text-5xl font-black uppercase tracking-wider">{title}</h1>
 
       {/* Deskripsi singkat artikel */}
       <p className="mt-5 max-w-2xl text-gray-400">{description}</p>

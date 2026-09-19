@@ -4,13 +4,14 @@ export default [
   route("/", "./routes/layout.tsx", [
     // child routes
     index("./routes/home.tsx"),
-    route("list", "./routes/list.tsx"),
-    route("pertanyaan", "./routes/pertanyaan.tsx"),
-    route("playground", "./routes/playground.tsx"),
     route("standing", "./routes/standing.tsx"),
-    route("notifications", "./routes/notification.tsx"),
+    route("download", "./routes/download.tsx"),
+
+    route("club/:id", "routes/club-profile.tsx"),
+
+    // nested route
     route("learning/snippet", "./routes/learning/snippet.tsx"),
-    route("coffee", "./routes/coffeeRoute.tsx"),
+    route("learning/git", "./routes/learning/git.tsx"),
 
     route("*", "./routes/not-found.tsx"),
   ]),

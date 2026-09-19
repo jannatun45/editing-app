@@ -1,90 +1,167 @@
-// app/routes/home.tsx
-
-// Mengimpor tipe route dari React Router.
-import type { Route } from "./+types/home";
-
-// Mengimpor useRef dari React.
-import { useRef } from "react";
-
-// Mengimpor template utama aplikasi.
-import MainLayout from "~/components/templates/MainLayout";
-
-// Mengimpor organism canvas.
-import DesignCanvas from "~/components/organisms/DesignCanvas";
-
-// Mengimpor organism sidebar.
-import Aside from "~/components/organisms/Aside";
-
-// Mengimpor molecule action canvas.
-import CanvasActions from "~/components/molecules/CanvasActions";
-
-// Mengimpor custom hook untuk mengatur scale canvas.
-import useCanvasScale from "~/hooks/useCanvasScale";
-
-// Mengimpor custom hook untuk mengatur element canvas.
-import useCanvasElements from "~/hooks/useCanvasElements";
-
-// Mengimpor utility untuk download PNG.
-import { downloadImage } from "~/utils/downloadImage";
+import { useEffect, useState } from "react";
+import { getClubs } from "~/services/clubsServices";
+import type { Club } from "~/types/api/clubs";
+import { tableFeatures, useTable, type ColumnDef } from "@tanstack/react-table";
 import Container from "~/components/templates/Container";
+import AddClubModal from "~/components/organisms/AddClubModal";
+import Button from "~/components/atoms/Button";
+import { Link } from "react-router";
 
-// Mengatur metadata halaman.
-export function meta({}: Route.MetaArgs) {
-  return [
-    // Menentukan title browser.
-    { title: "League Super - Standing" },
+// 2. Declare which features this table uses / Sebutkan fitur-fitur apa saja yang digunakan oleh tabel ini
+const features = tableFeatures({});
 
-    // Menentukan description halaman.
-    {
-      name: "description",
-      content: "League Super standing design editor",
-    },
-  ];
-}
+// 3. Define your columns /  Selecting a column / menentukan kolom
+const columns: Array<ColumnDef<typeof features, Club>> = [
+  {
+    id: "no",
+    header: "No",
+    cell: ({ row }) => row.index + 1,
+  },
+  {
+    accessorKey: "name_club",
+    header: "Club",
+    cell: ({ row }) => (
+      <Link
+        to={`/club/${row.original._id}`}
+        className="font-semibold hover:underline"
+      >
+        {row.original.name_club}
+      </Link>
+    ),
+  },
+  {
+    accessorKey: "points",
+    header: "pts",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "match",
+    header: "M",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "win",
+    header: "W",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "lose",
+    header: "L",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goals_for",
+    header: "GF",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goals_againts",
+    header: "GA",
+    cell: (info) => info.getValue(),
+  },
+  {
+    accessorKey: "goal_difference",
+    header: "GD",
+    cell: (info) => info.getValue(),
+  },
+];
 
-// Page utama untuk editor klasemen.
 export default function Standing() {
-  // Reference menuju paper yang akan diexport.
-  const paperRef = useRef<HTMLDivElement>(null);
+  // 4. data awal berasal dari API
+  const [data, setData] = useState<Club[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Mengambil scale otomatis dari custom hook.
-  const scale = useCanvasScale();
+  const loadClubs = () => {
+    getClubs()
+      .then((data) => {
+        setData(data);
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
 
-  // Mengambil data dan function element dari custom hook.
-  const { elements, addText, handleMouseDown } = useCanvasElements(scale);
+  // 5. ambil data dari express api
+  useEffect(() => {
+    loadClubs();
+  }, []);
 
-  // Function untuk melakukan download canvas.
-  async function handleDownload() {
-    // Menghentikan function jika paper belum tersedia.
-    if (!paperRef.current) return;
-
-    try {
-      // Menjalankan utility download PNG.
-      await downloadImage(paperRef.current, "klasemen-pekan-21.png");
-    } catch (error) {
-      // Menampilkan error apabila proses download gagal.
-      console.error("Gagal download:", error);
-    }
-  }
+  // 5. Create the table instance
+  const table = useTable({
+    key: "club-table",
+    features,
+    columns,
+    data,
+  });
 
   return (
-    // Template utama aplikasi.
     <Container>
+      <div className="overflow-hidden rounded-tl-2xl shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className={`whitespace-nowrap border-b border-gray-200 px-4 py-3 text-xl font-semibold uppercase tracking-wide text-gray-500 ${
+                        header.column.id === "name_club"
+                          ? "text-left"
+                          : "text-center"
+                      }`}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <table.FlexRender header={header} />
+                      )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+
+            <tbody className="divide-y divide-gray-100">
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="transition-colors hover:bg-gray-200"
+                >
+                  {row.getAllCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={`whitespace-nowrap px-4 py-4 text-2xl text-gray-700 ${
+                        cell.column.id === "name_club"
+                          ? "text-left"
+                          : "text-center"
+                      }`}
+                    >
+                      <table.FlexRender cell={cell} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>{" "}
       <div className="">
-        {/* Organism utama editor canvas. */}
-        <DesignCanvas
-          paperRef={paperRef}
-          scale={scale}
-          elements={elements}
-          onMouseDown={handleMouseDown}
-        />
+        <div className="mb-6 ">
+          <h1 className="text-2xl font-bold uppercase">crud</h1>
 
-        {/* Molecule yang berisi tombol editor. */}
-        <CanvasActions onAddText={addText} onDownload={handleDownload} />
+          <Button onClick={() => setIsModalOpen(true)} className="">
+            + Add Club
+          </Button>
+        </div>
+
+        {/* Tabel club kamu */}
+
+        {isModalOpen && (
+          <AddClubModal
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={loadClubs}
+          />
+        )}
       </div>
-
-      {/* Organism sidebar editor. */}
-      <Aside />
     </Container>
   );
 }
