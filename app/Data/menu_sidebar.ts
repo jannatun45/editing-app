@@ -15,6 +15,7 @@ import {
   MonitorSmartphone,
   Coffee,
   ArrowDownToLine,
+  Volleyball,
 } from "lucide-react";
 import type { MenuItem } from "~/types/sidenav/menuItems";
 
@@ -25,6 +26,21 @@ export const menuItems: MenuItem[] = [
     path: "/",
   },
   {
+    label: "matches",
+    icon: Volleyball,
+    path: "/matches",
+  },
+  {
+    label: "standing",
+    icon: LayoutFreeform,
+    path: "/standing",
+  },
+  {
+    label: "download",
+    icon: ArrowDownToLine,
+    path: "/download",
+  },
+  {
     label: "learning",
     icon: BookOpenText,
     path: "/learning",
@@ -33,17 +49,10 @@ export const menuItems: MenuItem[] = [
         label: "snippet",
         path: "learning/snippet",
       },
+      {
+        label: "git",
+        path: "learning/git",
+      },
     ],
-  },
-  {
-    label: "standing",
-    icon: LayoutFreeform,
-    path: "/standing",
-  },
-
-  {
-    label: "download",
-    icon: ArrowDownToLine,
-    path: "/download",
   },
 ];
