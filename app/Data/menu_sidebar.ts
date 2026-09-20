@@ -25,6 +25,21 @@ export const menuItems: MenuItem[] = [
     path: "/",
   },
   {
+    label: "standing",
+    icon: LayoutFreeform,
+    path: "/standing",
+  },
+  {
+    label: "download",
+    icon: ArrowDownToLine,
+    path: "/download",
+  },
+  {
+    label: "matches",
+    icon: ArrowDownToLine,
+    path: "/matches",
+  },
+  {
     label: "learning",
     icon: BookOpenText,
     path: "/learning",
@@ -33,17 +48,10 @@ export const menuItems: MenuItem[] = [
         label: "snippet",
         path: "learning/snippet",
       },
+      {
+        label: "git",
+        path: "learning/git",
+      },
     ],
-  },
-  {
-    label: "standing",
-    icon: LayoutFreeform,
-    path: "/standing",
-  },
-
-  {
-    label: "download",
-    icon: ArrowDownToLine,
-    path: "/download",
   },
 ];

@@ -8,6 +8,7 @@ export default [
     route("download", "./routes/download.tsx"),
 
     route("club/:id", "routes/club-profile.tsx"),
+    route("matches", "routes/matches.tsx"),
 
     // nested route
     route("learning/snippet", "./routes/learning/snippet.tsx"),
