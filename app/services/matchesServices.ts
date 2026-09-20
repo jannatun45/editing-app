@@ -5,8 +5,8 @@ const API_URL = "http://localhost:3000/api";
 // Ambil semua pertandingan
 export async function getMatches(season?: string): Promise<Match[]> {
   const url = season
-    ? `${API_URL}/matches?season=${encodeURIComponent(season)}`
-    : `${API_URL}/matches`;
+    ? `${API_URL}/fixtures?season=${encodeURIComponent(season)}`
+    : `${API_URL}/fixtures`;
 
   const response = await fetch(url);
 
