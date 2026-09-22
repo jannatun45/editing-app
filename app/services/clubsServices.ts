@@ -21,7 +21,7 @@ export async function createClubs(formData: FormData): Promise<Club[]> {
   return response.json();
 }
 
-export async function getClub(id: string): Promise<Club> {
+export async function getClubById(id: string): Promise<Club> {
   // Ambil satu club berdasarkan ID
   const response = await fetch(`http://localhost:3000/api/club/${id}`);
 

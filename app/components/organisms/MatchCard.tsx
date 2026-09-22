@@ -2,11 +2,15 @@ import type { Match } from "~/types/api/matches";
 
 type MatchCardProps = {
   match: Match;
+  onClick: () => void;
 };
 
-export default function MatchCard({ match }: MatchCardProps) {
+export default function MatchCard({ match, onClick }: MatchCardProps) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+    <div
+      onClick={onClick}
+      className="cursor-pointer rounded-xl border border-zinc-800 bg-zinc-900 p-5 transition hover:border-zinc-600"
+    >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
         {/* Home */}
         <div className="text-right">
@@ -21,7 +25,7 @@ export default function MatchCard({ match }: MatchCardProps) {
         <div className="text-center">
           {match.status === "finished" ? (
             <div className="text-2xl font-bold text-white">
-              {match.home_score} - {match.away_score}
+              {match.home_score ?? 0} - {match.away_score ?? 0}
             </div>
           ) : (
             <div className="text-sm text-zinc-500">VS</div>

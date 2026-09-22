@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import FixtureCard from "~/components/organisms/FictureCard";
 
-import { getClub } from "~/services/clubsServices";
+import { getClubById } from "~/services/clubsServices";
 import { getClubFixtures } from "~/services/fixturesServices";
 
 import type { Club } from "~/types/api/clubs";
@@ -18,8 +18,9 @@ export default function ClubProfile() {
   useEffect(() => {
     if (!id) return;
 
-    getClub(id)
+    getClubById(id)
       .then((data) => {
+        console.log("data in club profile -> ", data);
         setClub(data);
       })
       .catch((error) => {
@@ -30,6 +31,8 @@ export default function ClubProfile() {
 
     getClubFixtures(id)
       .then((data) => {
+        console.log("data match in club profile -> ", data);
+
         setFixtures(data);
       })
       .catch((error) => {
