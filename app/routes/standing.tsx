@@ -1,166 +1,141 @@
 import { useEffect, useState } from "react";
-import { getClubs } from "~/services/clubsServices";
-import type { Club } from "~/types/api/clubs";
-import { tableFeatures, useTable, type ColumnDef } from "@tanstack/react-table";
-import Container from "~/components/templates/Container";
-import AddClubModal from "~/components/organisms/AddClubModal";
-import Button from "~/components/atoms/Button";
 import { Link } from "react-router";
+import Container from "~/components/templates/Container";
+import { getStandings } from "~/services/standingServices";
+import type { Standing } from "~/types/api/standings";
 
-// 2. Declare which features this table uses / Sebutkan fitur-fitur apa saja yang digunakan oleh tabel ini
-const features = tableFeatures({});
+export default function StandingPage() {
+  const [standings, setStandings] = useState<Standing[]>([]);
+  const [season, setSeason] = useState("2026/2027");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-// 3. Define your columns /  Selecting a column / menentukan kolom
-const columns: Array<ColumnDef<typeof features, Club>> = [
-  {
-    id: "no",
-    header: "No",
-    cell: ({ row }) => row.index + 1,
-  },
-  {
-    accessorKey: "name_club",
-    header: "Club",
-    cell: ({ row }) => (
-      <Link
-        to={`/club/${row.original._id}`}
-        className="font-semibold hover:underline"
-      >
-        {row.original.name_club}
-      </Link>
-    ),
-  },
-  {
-    accessorKey: "points",
-    header: "pts",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "match",
-    header: "M",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "win",
-    header: "W",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "lose",
-    header: "L",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "goals_for",
-    header: "GF",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "goals_againts",
-    header: "GA",
-    cell: (info) => info.getValue(),
-  },
-  {
-    accessorKey: "goal_difference",
-    header: "GD",
-    cell: (info) => info.getValue(),
-  },
-];
+  const loadStandings = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-export default function Standing() {
-  // 4. data awal berasal dari API
-  const [data, setData] = useState<Club[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+      const data = await getStandings(season);
 
-  const loadClubs = () => {
-    getClubs()
-      .then((data) => {
-        setData(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+      setStandings(data);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Gagal mengambil standing",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 5. ambil data dari express api
   useEffect(() => {
-    loadClubs();
-  }, []);
+    loadStandings();
+  }, [season]);
 
-  // 5. Create the table instance
-  const table = useTable({
-    key: "club-table",
-    features,
-    columns,
-    data,
-  });
+  if (loading) {
+    return (
+      <Container>
+        <p>Loading...</p>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container>
+        <p>{error}</p>
+      </Container>
+    );
+  }
 
   return (
     <Container>
-      <div className="overflow-hidden rounded-tl-2xl shadow-sm">
+      <div className="space-y-6">
+        {/* Season */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">Standing</h1>
+
+          <select
+            value={season}
+            onChange={(event) => setSeason(event.target.value)}
+            className="rounded-lg bg-zinc-800 px-4 py-2 text-white"
+          >
+            <option value="2026/2027">2026/2027</option>
+
+            <option value="2027/2028">2027/2028</option>
+          </select>
+        </div>
+
+        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className={`whitespace-nowrap border-b border-gray-200 px-4 py-3 text-xl font-semibold uppercase tracking-wide text-gray-500 ${
-                        header.column.id === "name_club"
-                          ? "text-left"
-                          : "text-center"
-                      }`}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <table.FlexRender header={header} />
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
+            <thead>
+              <tr className="border-b border-zinc-800 text-sm text-zinc-500">
+                <th className="px-4 py-3 text-left">#</th>
+
+                <th className="px-4 py-3 text-left">Club</th>
+
+                <th className="px-4 py-3">M</th>
+
+                <th className="px-4 py-3">W</th>
+
+                <th className="px-4 py-3">D</th>
+
+                <th className="px-4 py-3">L</th>
+
+                <th className="px-4 py-3">GF</th>
+
+                <th className="px-4 py-3">GA</th>
+
+                <th className="px-4 py-3">GD</th>
+
+                <th className="px-4 py-3">PTS</th>
+              </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-100">
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="transition-colors hover:bg-gray-200"
-                >
-                  {row.getAllCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className={`whitespace-nowrap px-4 py-4 text-2xl text-gray-700 ${
-                        cell.column.id === "name_club"
-                          ? "text-left"
-                          : "text-center"
-                      }`}
-                    >
-                      <table.FlexRender cell={cell} />
-                    </td>
-                  ))}
+            <tbody>
+              {standings.map((standing, index) => (
+                <tr key={standing._id} className="border-b border-zinc-900">
+                  <td className="px-4 py-4 text-zinc-500">{index + 1}</td>
+
+                  <td className="px-4 py-4">
+                    <div className="font-semibold text-white">
+                      <Link
+                        to={`/club/${standing.club._id}`}
+                        className="font-semibold hover:underline"
+                      >
+                        {standing.club.name_club}
+                      </Link>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-4 text-center">{standing.match}</td>
+
+                  <td className="px-4 py-4 text-center">{standing.win}</td>
+
+                  <td className="px-4 py-4 text-center">{standing.draw}</td>
+
+                  <td className="px-4 py-4 text-center">{standing.lose}</td>
+
+                  <td className="px-4 py-4 text-center">
+                    {standing.goals_for}
+                  </td>
+
+                  <td className="px-4 py-4 text-center">
+                    {standing.goals_againts}
+                  </td>
+
+                  <td className="px-4 py-4 text-center">
+                    {standing.goal_difference}
+                  </td>
+
+                  <td className="px-4 py-4 text-center font-bold text-white">
+                    {standing.points}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>{" "}
-      <div className="">
-        <div className="mb-6 ">
-          <h1 className="text-2xl font-bold uppercase">crud</h1>
-
-          <Button onClick={() => setIsModalOpen(true)} className="">
-            + Add Club
-          </Button>
-        </div>
-
-        {/* Tabel club kamu */}
-
-        {isModalOpen && (
-          <AddClubModal
-            onClose={() => setIsModalOpen(false)}
-            onSuccess={loadClubs}
-          />
-        )}
       </div>
     </Container>
   );
