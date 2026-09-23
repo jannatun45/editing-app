@@ -21,7 +21,6 @@ export default function Matches() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  console.log("oke");
   // Ambil jadwal
   const loadMatches = async () => {
     try {
@@ -65,9 +64,6 @@ export default function Matches() {
     try {
       setLoading(true);
       setError("");
-      console.log("selec id -> ", selectedMatch._id);
-      console.log("home -> ", homeScore);
-      console.log("away -> ", awayScore);
       await updateMatchScore(selectedMatch._id, homeScore, awayScore);
 
       // Ambil ulang data dari database
@@ -133,221 +129,43 @@ export default function Matches() {
         {!loading && matches.length === 0 && (
           <p className="text-zinc-500">Belum ada pertandingan.</p>
         )}
-
-        {/* 
-  Container untuk seluruh daftar pertandingan.
-  space-y-8 = memberi jarak vertikal antar Matchday.
-*/}
         <div className="space-y-8">
           {/*
-    matches = semua data pertandingan.
-
-    reduce() digunakan untuk mengelompokkan pertandingan
-    berdasarkan matchday.
-
-    Contoh data:
-    [
-      { matchday: 1, ... },
-      { matchday: 1, ... },
-      { matchday: 2, ... },
-      { matchday: 2, ... }
-    ]
-
-    Akan diubah menjadi:
-    {
-      1: [pertandingan, pertandingan],
-      2: [pertandingan, pertandingan]
-    }
-  */}
+           */}
           {Object.entries(
             matches.reduce(
               (groups, match) => {
-                /*
-          Mengecek apakah group untuk matchday ini
-          sudah dibuat atau belum.
-
-          Contoh:
-          groups[1] belum ada
-        */
                 if (!groups[match.matchday]) {
-                  /*
-            Kalau belum ada, buat array kosong.
-
-            Contoh:
-            groups[1] = []
-          */
                   groups[match.matchday] = [];
                 }
-
-                /*
-          Masukkan pertandingan ke dalam group
-          sesuai matchday-nya.
-
-          Contoh:
-          groups[1].push(match)
-
-          Artinya pertandingan ini masuk
-          ke Matchday 1.
-        */
                 groups[match.matchday].push(match);
-
-                /*
-          Kembalikan groups yang sudah diperbarui
-          untuk proses pertandingan berikutnya.
-        */
                 return groups;
               },
-
-              /*
-        Nilai awal reduce adalah object kosong.
-
-        Record<number, Match[]>
-        artinya:
-        key   = number (matchday)
-        value = array berisi Match
-      */
               {} as Record<number, Match[]>,
             ),
-          )
+          ).map(([matchday, dayMatches]) => (
+            <div key={matchday} className="space-y-3">
+              <h2 className="text-lg font-semibold text-white">
+                Matchday {matchday}
+              </h2>
 
-            /*
-    Object.entries() mengubah object:
-
-    {
-      1: [match1, match2],
-      2: [match3, match4]
-    }
-
-    menjadi array:
-
-    [
-      ["1", [match1, match2]],
-      ["2", [match3, match4]]
-    ]
-
-    Kemudian setiap group di-loop menggunakan map().
-  */
-            .map(([matchday, dayMatches]) => (
-              /*
-      Container untuk satu Matchday.
-
-      key={matchday} digunakan React
-      sebagai identitas unik element.
-    */
-              <div key={matchday} className="space-y-3">
-                {/*
-        Menampilkan judul Matchday.
-
-        Contoh:
-        Matchday 1
-        Matchday 2
-        Matchday 3
-      */}
-                <h2 className="text-lg font-semibold text-white">
-                  Matchday {matchday}
-                </h2>
-
-                {/*
-        dayMatches berisi semua pertandingan
-        yang berada di Matchday tersebut.
-
-        Contoh:
-        dayMatches = [
-          match1,
-          match2,
-          match3
-        ]
-      */}
+              <div className="grid grid-cols-2 gap-3">
                 {dayMatches.map((match) => (
-                  /*
-          Menampilkan satu MatchCard
-          untuk setiap pertandingan.
-        */
                   <MatchCard
-                    /*
-            key digunakan React untuk membedakan
-            setiap MatchCard.
-
-            _id berasal dari MongoDB.
-          */
                     key={match._id}
-
-                    /*
-            Mengirim data pertandingan ke MatchCard.
-
-            Di dalam MatchCard nanti bisa menggunakan:
-            match.home_club
-            match.away_club
-            match.home_score
-            match.away_score
-            dll.
-          */
                     match={match}
-
-                    /*
-            Ketika MatchCard diklik,
-            jalankan:
-
-            setSelectedMatch(match)
-
-            Artinya pertandingan yang diklik
-            disimpan ke state selectedMatch.
-
-            Setelah itu EditScoreModal akan muncul.
-          */
                     onClick={() => setSelectedMatch(match)}
                   />
                 ))}
               </div>
-            ))}
+            </div>
+          ))}
         </div>
 
-        {/*
-  Mengecek apakah ada pertandingan yang sedang dipilih.
-
-  Kalau:
-    selectedMatch = null
-    → modal tidak ditampilkan.
-
-  Kalau:
-    selectedMatch = object pertandingan
-    → modal ditampilkan.
-*/}
         {selectedMatch && (
-          /*
-    Menampilkan modal edit score.
-
-    match={selectedMatch}
-    mengirim pertandingan yang sedang dipilih
-    ke dalam EditScoreModal.
-  */
           <EditScoreModal
             match={selectedMatch}
-
-            /*
-      Ketika modal meminta ditutup,
-      selectedMatch dikembalikan menjadi null.
-
-      Akibatnya:
-
-      {selectedMatch && (...)}
-
-      menjadi false sehingga modal hilang.
-    */
             onClose={() => setSelectedMatch(null)}
-
-            /*
-      Mengirim fungsi handleSaveScore
-      dari component Matches ke modal.
-
-      Jadi ketika tombol Save di modal diklik,
-      EditScoreModal akan menjalankan:
-
-      onSave(homeScore, awayScore)
-
-      kemudian fungsi handleSaveScore()
-      di component Matches akan bekerja.
-    */
             onSave={handleSaveScore}
           />
         )}
