@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 import MatchCard from "~/components/organisms/MatchCard";
 import Container from "~/components/templates/Container";
@@ -6,22 +7,30 @@ import Container from "~/components/templates/Container";
 import {
   getMatches,
   generateMatches,
+  updateMatch,
   updateMatchScore,
 } from "~/services/matchesServices";
-import type { Fixture } from "~/types/api/fixtures";
 
-import type { Match } from "~/types/api/matches";
+import type { Match, MatchGoalInput } from "~/types/api/matches";
 
 export default function Matches() {
+  // =========================
+  // STATE
+  // =========================
+
   const [matches, setMatches] = useState<Match[]>([]);
+
   const [season, setSeason] = useState("2026/2027");
 
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
-  // Ambil jadwal
+  // =========================
+  // LOAD MATCHES
+  // =========================
   const loadMatches = async () => {
     try {
       setLoading(true);
@@ -31,17 +40,28 @@ export default function Matches() {
 
       setMatches(data);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengambil jadwal pertandingan",
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // =========================
+  // LOAD SAAT SEASON BERUBAH
+  // =========================
+
   useEffect(() => {
     loadMatches();
   }, [season]);
 
-  // Generate jadwal
+  // =========================
+  // GENERATE MATCHES
+  // =========================
+
   const handleGenerate = async () => {
     try {
       setLoading(true);
@@ -57,23 +77,50 @@ export default function Matches() {
     }
   };
 
-  // save update match
-  const handleSaveScore = async (homeScore: number, awayScore: number) => {
-    if (!selectedMatch) return;
-    console.log("testing");
+  // =========================
+  // SAVE EDIT MATCH
+  // =========================
+
+  const handleSaveMatch = async (
+    matchday: number,
+    matchDate: string,
+    homeScore: number,
+    awayScore: number,
+    goals: MatchGoalInput[],
+  ) => {
+    if (!selectedMatch) {
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
+
+      // =========================
+      // UPDATE JADWAL
+      // =========================
+
+      await updateMatch(selectedMatch._id, matchday, matchDate);
+
+      // =========================
+      // UPDATE SCORE + GOALS
+      // =========================
+
       await updateMatchScore(selectedMatch._id, homeScore, awayScore);
 
-      // Ambil ulang data dari database
+      // =========================
+      // REFRESH DATA
+      // =========================
+
       await loadMatches();
 
       // Tutup modal
       setSelectedMatch(null);
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : "Gagal mengupdate score",
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui pertandingan",
       );
     } finally {
       setLoading(false);
@@ -83,90 +130,97 @@ export default function Matches() {
   return (
     <Container>
       <div className="space-y-6">
-        {/* Header */}
+        {/* ========================= HEADER ========================= */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Matches</h1>
 
-            <p className="text-zinc-500">Jadwal pertandingan liga</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Jadwal dan hasil pertandingan
+            </p>
           </div>
 
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="rounded-lg bg-white px-4 py-2 text-black"
-          >
-            Generate Schedule
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Season */}
+
+            <select
+              value={season}
+              onChange={(event) => setSeason(event.target.value)}
+              className="rounded-lg bg-zinc-800 px-4 py-2 text-white outline-none"
+            >
+              <option value="2026/2027">2026/2027</option>
+
+              <option value="2027/2028">2027/2028</option>
+            </select>
+
+            {/* Generate */}
+
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={loading}
+              className="rounded-lg bg-white px-4 py-2 font-medium text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Processing..." : "Generate Schedule"}
+            </button>
+          </div>
         </div>
 
-        {/* Season */}
-        <div>
-          <label className="mb-2 block text-sm text-zinc-400">Season</label>
+        {/* ========================= ERROR ========================= */}
 
-          <select
-            value={season}
-            onChange={(event) => setSeason(event.target.value)}
-            className="rounded-lg bg-zinc-800 px-4 py-2 text-white"
-          >
-            <option value="2026/2027">2026/2027</option>
-
-            <option value="2027/2028">2027/2028</option>
-          </select>
-        </div>
-
-        {/* Error */}
         {error && (
-          <div className="rounded-lg bg-red-500/10 p-4 text-red-400">
+          <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        {/* Loading */}
-        {loading && <p className="text-zinc-400">Loading...</p>}
+        {/* ========================= LOADING ========================= */}
 
-        {/* Matches */}
-        {!loading && matches.length === 0 && (
-          <p className="text-zinc-500">Belum ada pertandingan.</p>
+        {loading && (
+          <div className="py-10 text-center text-sm text-zinc-500">
+            Loading matches...
+          </div>
         )}
-        <div className="space-y-8">
-          {/*
-           */}
-          {Object.entries(
-            matches.reduce(
-              (groups, match) => {
-                if (!groups[match.matchday]) {
-                  groups[match.matchday] = [];
-                }
-                groups[match.matchday].push(match);
-                return groups;
-              },
-              {} as Record<number, Match[]>,
-            ),
-          ).map(([matchday, dayMatches]) => (
-            <div key={matchday} className="space-y-3">
-              <h2 className="text-lg font-semibold text-white">
-                Matchday {matchday}
-              </h2>
 
-              <div className="grid grid-cols-2 gap-3">
-                {dayMatches.map((match) => (
-                  <MatchCard
-                    key={match._id}
-                    match={match}
-                    onClick={() => setSelectedMatch(match)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* ========================= EMPTY ========================= */}
+
+        {!loading && matches.length === 0 && (
+          <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center">
+            <p className="text-zinc-500">
+              Belum ada jadwal pertandingan untuk season {season}.
+            </p>
+
+            <button
+              type="button"
+              onClick={handleGenerate}
+              className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200"
+            >
+              Generate Schedule
+            </button>
+          </div>
+        )}
+
+        {/* ========================= MATCH LIST ========================= */}
+
+        {!loading && matches.length > 0 && (
+          <div className=" grid grid-cols-2 gap-3">
+            {matches.map((match) => (
+              <MatchCard
+                key={match._id}
+                match={match}
+                onClick={() => setSelectedMatch(match)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ========================= EDIT MODAL ========================= */}
 
         {selectedMatch && (
           <EditScoreModal
             match={selectedMatch}
             onClose={() => setSelectedMatch(null)}
-            onSave={handleSaveScore}
+            onSave={handleSaveMatch}
           />
         )}
       </div>

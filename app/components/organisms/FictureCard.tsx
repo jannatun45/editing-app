@@ -1,18 +1,24 @@
 import type { Fixture } from "~/types/api/fixtures";
+type FixtureCardProps = {
+  fixture: Fixture;
+  clubId: string;
+  onClick: () => void;
+};
 
 export default function FixtureCard({
   fixture,
   clubId,
-}: {
-  fixture: Fixture;
-  clubId: string;
-}) {
+  onClick,
+}: FixtureCardProps) {
   const isHome = fixture.home_club._id === clubId;
 
   const opponent = isHome ? fixture.away_club : fixture.home_club;
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+    <div
+      onClick={onClick}
+      className="rounded-xl border cursor-pointer border-zinc-800 bg-zinc-900 p-5"
+    >
       <div className="grid grid-cols-[80px_1fr_auto_1fr] items-center gap-4">
         {/* Matchday */}
         <div className="text-sm text-zinc-500">

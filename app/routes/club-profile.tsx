@@ -8,12 +8,14 @@ import { getClubFixtures } from "~/services/fixturesServices";
 import { getStandings } from "~/services/standingServices";
 
 import type { Club } from "~/types/api/clubs";
-import type { Fixture } from "~/types/api/fixtures";
 import type { Standing } from "~/types/api/standings";
 
 import { getPlayersByClub } from "~/services/playerServices";
 import type { Player } from "~/types/api/player";
 import AddPlayerModal from "~/components/organisms/AddPlayerModal";
+
+import type { Fixture } from "~/types/api/fixtures";
+import EditScoreModal from "~/components/organisms/EditScoreModal";
 
 export default function ClubProfile() {
   const { id } = useParams();
@@ -31,6 +33,8 @@ export default function ClubProfile() {
   const [showAddPlayer, setShowAddPlayer] = useState(false);
 
   const [error, setError] = useState("");
+
+  const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
 
   const season = "2026/2027";
 
@@ -113,20 +117,19 @@ export default function ClubProfile() {
 
   return (
     <div className="space-y-8">
-      {/* Club header */}
+      {/* ========================= CLUB HEADER ========================= */}
       <section className="mt-2 flex h-72 items-end justify-between rounded-tl-3xl bg-zinc-600">
         <h1 className="mx-7 mb-7 text-5xl font-bold uppercase tracking-wider">
           {club.name_club}
         </h1>
       </section>
-
-      {/* Club information */}
+      {/* ========================= CLUB INFORMATION ========================= */}
       <section>
         <p>Stadium: {club.stadium}</p>
         <p>District: {club.district}</p>
       </section>
 
-      {/* Standing */}
+      {/* ========================= STANDING ========================= */}
       <section>
         <h2 className="mb-4 text-2xl font-bold">Statistics</h2>
 
@@ -146,7 +149,7 @@ export default function ClubProfile() {
         )}
       </section>
 
-      {/* palyaer */}
+      {/* ========================= PLAYER CHARD ========================= */}
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Players</h2>
@@ -206,7 +209,7 @@ export default function ClubProfile() {
           </div>
         )}
       </section>
-      {/* Jadwal pertandingan */}
+      {/* ========================= JADWAL PERTANDINGAN / SCHEDULE========================= */}
       <section>
         <h2 className="mb-4 text-2xl font-bold">Schedule</h2>
 
@@ -216,14 +219,19 @@ export default function ClubProfile() {
           <p className="text-zinc-500">Belum ada jadwal pertandingan.</p>
         )}
 
-        <div className="space-y-3">
+        <div className=" grid grid-cols-2 gap-3">
           {fixtures.map((fixture) => (
-            <FixtureCard key={fixture._id} fixture={fixture} clubId={id!} />
+            <FixtureCard
+              key={fixture._id}
+              fixture={fixture}
+              clubId={id!}
+              onClick={() => setSelectedFixture(fixture)}
+            />
           ))}
         </div>
       </section>
 
-      {/* modal add player */}
+      {/* ========================= MODAL ADD PLAYER ========================= */}
       {showAddPlayer && id && (
         <AddPlayerModal
           clubId={id}
@@ -239,6 +247,16 @@ export default function ClubProfile() {
                 console.error(error);
               });
           }}
+        />
+      )}
+
+      {/* ========================= MODAL ADD EDIT SCORE ========================= */}
+
+      {selectedFixture && (
+        <EditScoreModal
+          match={selectedFixture}
+          onClose={() => setSelectedFixture(null)}
+          onSave={() => {}}
         />
       )}
     </div>

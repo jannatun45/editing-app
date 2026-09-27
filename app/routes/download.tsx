@@ -84,7 +84,7 @@ export default function Download() {
       </div>
 
       {/* Organism sidebar editor. */}
-      <Aside />
+      {/* <Aside /> */}
     </Container>
   );
 }

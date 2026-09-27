@@ -14,12 +14,12 @@ export default function CanvasAction({
   return (
     <div className="flex gap-2 mt-4">
       {/* button untuk menambahakan text ke canvas */}
-      <Button onclick={onAddText} className="bg-blue-400 hover:bg-blue-600">
+      <Button onClick={onAddText} className="bg-blue-400 hover:bg-blue-600">
         + tambah teks
       </Button>
 
       {/* button untuk mendownoad canvas menjadi PNG */}
-      <Button onclick={onDownload} className="bg-green-400 hover:bg-green-600">
+      <Button onClick={onDownload} className="bg-green-400 hover:bg-green-600">
         download PNG
       </Button>
     </div>

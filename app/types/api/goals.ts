@@ -6,18 +6,9 @@ export type MatchGoal = {
   assist: string | null;
 };
 
-export type MatchGoalInput = {
-  club: string;
-  scorer: string;
-  minute: string;
-  assist: string;
-};
-
 export type Match = {
   _id: string;
-
   season: string;
-
   matchday: number;
 
   home_club: {
@@ -32,14 +23,12 @@ export type Match = {
     logo: string | null;
   };
 
-  match_date: string | null;
-
   home_score: number | null;
-
   away_score: number | null;
+
+  match_date: string | null;
 
   status: "scheduled" | "finished" | "postponed";
 
-  // TAMBAHKAN INI
   goals: MatchGoal[];
 };
