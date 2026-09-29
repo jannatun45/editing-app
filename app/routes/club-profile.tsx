@@ -4,7 +4,13 @@ import { useParams } from "react-router";
 import FixtureCard from "~/components/organisms/FictureCard";
 
 import { getClubById } from "~/services/clubsServices";
-import { getClubFixtures } from "~/services/fixturesServices";
+import {
+  getClubFixtures,
+  getMatches,
+  resetFixtureResult,
+  updateFixture,
+  updateMatchScore,
+} from "~/services/fixturesServices";
 import { getStandings } from "~/services/standingServices";
 
 import type { Club } from "~/types/api/clubs";
@@ -14,7 +20,7 @@ import { getPlayersByClub } from "~/services/playerServices";
 import type { Player } from "~/types/api/player";
 import AddPlayerModal from "~/components/organisms/AddPlayerModal";
 
-import type { Fixture } from "~/types/api/fixtures";
+import type { Fixture, FixtureGoalInput } from "~/types/api/fixtures";
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 
 export default function ClubProfile() {
@@ -115,6 +121,106 @@ export default function ClubProfile() {
     return <div>Club tidak ditemukan.</div>;
   }
 
+  // =========================
+  // HANDLE SAVE SCORE
+  // =========================
+
+  const handleSaveScore = async (
+    matchday: number,
+    matchDate: string,
+    homeScore: number,
+    awayScore: number,
+    goals: FixtureGoalInput[],
+  ) => {
+    // Pastikan ada fixture yang sedang dipilih.
+    if (!selectedFixture) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      // UPDATE JADWAL
+      await updateFixture(selectedFixture._id, matchday, matchDate);
+
+      // UPDATE SCORE + GOALS
+      await updateMatchScore(selectedFixture._id, homeScore, awayScore);
+
+      // REFRESH DATA
+      const updatedFixtures = await getClubFixtures(id!);
+
+      // Ambil semua standing season
+      const standings = await getStandings(season);
+
+      // Cari standing milik club ini
+      const clubStanding = standings.find(
+        (standing) => standing.club._id === id,
+      );
+
+      setStanding(clubStanding ?? null);
+      setFixtures(updatedFixtures);
+      // TUTUP MODAL
+      setSelectedFixture(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui pertandingan",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // HANDLE RESET RESULT
+  // =========================
+  const handleResetResult = async () => {
+    // posisi scroll saat ini
+    const scrollPosition = window.scrollY;
+    try {
+      setLoading(true);
+      setError("");
+
+      if (!selectedFixture) {
+        return;
+      }
+
+      // RESET MATCH
+      await resetFixtureResult(selectedFixture._id);
+
+      // REFRESH DATA
+      const updatedFixtures = await getClubFixtures(id!);
+      // Ambil semua standing season
+      const standings = await getStandings(season);
+
+      // Cari standing milik club ini
+      const clubStanding = standings.find(
+        (standing) => standing.club._id === id,
+      );
+
+      setFixtures(updatedFixtures);
+      setSelectedFixture(null);
+      setStanding(clubStanding ?? null);
+
+      // Kembalikan posisi scroll
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: "instant",
+        });
+      });
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mereset hasil pertandingan",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="space-y-8">
       {/* ========================= CLUB HEADER ========================= */}
@@ -254,9 +360,10 @@ export default function ClubProfile() {
 
       {selectedFixture && (
         <EditScoreModal
-          match={selectedFixture}
+          fixture={selectedFixture}
           onClose={() => setSelectedFixture(null)}
-          onSave={() => {}}
+          onSave={handleSaveScore}
+          onReset={handleResetResult}
         />
       )}
     </div>

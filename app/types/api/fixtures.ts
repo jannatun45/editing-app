@@ -23,6 +23,13 @@ export type FixtureGoal = {
   is_penalty: boolean;
 };
 
+export type FixtureGoalInput = {
+  club: string;
+  scorer: string;
+  minute: string;
+  assist: string;
+};
+
 export type Fixture = {
   _id: string;
 
