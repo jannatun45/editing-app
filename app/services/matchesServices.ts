@@ -1,9 +1,9 @@
-import type { Match } from "~/types/api/matches";
+import type { Fixture } from "~/types/api/fixtures";
 
 const API_URL = "http://localhost:3000/api";
 
 // Ambil semua pertandingan
-export async function getMatches(season?: string): Promise<Match[]> {
+export async function getMatches(season?: string): Promise<Fixture[]> {
   const url = season
     ? `${API_URL}/fixtures?season=${encodeURIComponent(season)}`
     : `${API_URL}/fixtures`;

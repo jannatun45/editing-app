@@ -1,5 +1,9 @@
-import type { Match } from "~/types/api/matches";
-type MatchCardProps = { match: Match; onClick: () => void };
+import type { Fixture } from "~/types/api/fixtures";
+type MatchCardProps = {
+  match: Fixture;
+  onClick: () => void;
+};
+
 export default function MatchCard({ match, onClick }: MatchCardProps) {
   const matchDate = match.match_date ? new Date(match.match_date) : null;
   return (

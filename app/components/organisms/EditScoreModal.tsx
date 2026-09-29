@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { resetFixtureResult } from "~/services/fixturesServices";
 
 import { getPlayersByClub } from "~/services/playerServices";
-import type { Match, MatchGoalInput } from "~/types/api/matches";
+import type { Fixture, FixtureGoalInput } from "~/types/api/fixtures";
 import type { Player } from "~/types/api/player";
 
 type GoalInput = {
@@ -12,32 +13,34 @@ type GoalInput = {
 };
 
 type EditScoreModalProps = {
-  match: Match;
+  fixture: Fixture;
   onClose: () => void;
+  onReset: () => Promise<void>;
 
   onSave: (
     matchday: number,
     matchDate: string,
     homeScore: number,
     awayScore: number,
-    goals: MatchGoalInput[],
+    goals: GoalInput[],
   ) => void;
 };
 
 export default function EditScoreModal({
-  match,
+  fixture,
   onClose,
   onSave,
+  onReset,
 }: EditScoreModalProps) {
   // =========================
   // JADWAL
   // =========================
 
-  const [matchday, setMatchday] = useState(match.matchday.toString());
+  const [matchday, setMatchday] = useState(fixture.matchday.toString());
 
   const [matchDate, setMatchDate] = useState(
-    match.match_date
-      ? new Date(match.match_date).toISOString().slice(0, 16)
+    fixture.match_date
+      ? new Date(fixture.match_date).toISOString().slice(0, 16)
       : "",
   );
 
@@ -46,11 +49,11 @@ export default function EditScoreModal({
   // =========================
 
   const [homeScore, setHomeScore] = useState(
-    match.home_score?.toString() ?? "0",
+    fixture.home_score?.toString() ?? "0",
   );
 
   const [awayScore, setAwayScore] = useState(
-    match.away_score?.toString() ?? "0",
+    fixture.away_score?.toString() ?? "0",
   );
 
   // =========================
@@ -82,8 +85,8 @@ export default function EditScoreModal({
         setError("");
 
         const [homeData, awayData] = await Promise.all([
-          getPlayersByClub(match.home_club._id),
-          getPlayersByClub(match.away_club._id),
+          getPlayersByClub(fixture.home_club._id),
+          getPlayersByClub(fixture.away_club._id),
         ]);
 
         setHomePlayers(homeData);
@@ -98,24 +101,24 @@ export default function EditScoreModal({
     };
 
     loadPlayers();
-  }, [match.home_club._id, match.away_club._id]);
+  }, [fixture.home_club._id, fixture.away_club._id]);
 
   // =========================
   // LOAD EXISTING GOALS
   // =========================
 
   useEffect(() => {
-    if (!match.goals) return;
+    if (!fixture.goals) return;
 
-    const existingGoals = match.goals.map((goal) => ({
-      club: goal.club,
-      scorer: goal.scorer,
+    const existingGoals: GoalInput[] = fixture.goals.map((goal) => ({
+      club: goal.club._id,
+      scorer: goal.scorer._id,
       minute: goal.minute.toString(),
-      assist: goal.assist ?? "",
+      assist: goal.assist?._id ?? "",
     }));
 
     setGoals(existingGoals);
-  }, [match.goals]);
+  }, [fixture.goals]);
 
   // =========================
   // ADD GOAL
@@ -125,7 +128,7 @@ export default function EditScoreModal({
     setGoals((currentGoals) => [
       ...currentGoals,
       {
-        club: match.home_club._id,
+        club: fixture.home_club._id,
         scorer: "",
         minute: "",
         assist: "",
@@ -144,9 +147,29 @@ export default function EditScoreModal({
   };
 
   // =========================
+  //  HANDLE RESET RESULT
+  // =========================
+  const handleResetResult = async () => {
+    try {
+      setError("");
+
+      await resetFixtureResult(fixture._id);
+
+      await onReset();
+
+      onClose();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mereset hasil pertandingan",
+      );
+    }
+  };
+
+  // =========================
   // UPDATE GOAL
   // =========================
-
   const handleGoalChange = (
     index: number,
     field: keyof GoalInput,
@@ -188,9 +211,8 @@ export default function EditScoreModal({
   };
 
   // =========================
-  // SUBMIT
+  // HANDLE SUBMIT
   // =========================
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -250,9 +272,8 @@ export default function EditScoreModal({
   // =========================
   // GET PLAYERS
   // =========================
-
   const getPlayers = (clubId: string) => {
-    if (clubId === match.home_club._id) {
+    if (clubId === fixture.home_club._id) {
       return homePlayers;
     }
 
@@ -262,7 +283,6 @@ export default function EditScoreModal({
   // =========================
   // GET PLAYER NAME
   // =========================
-
   const getPlayerName = (playerId: string) => {
     const player = [...homePlayers, ...awayPlayers].find(
       (player) => player._id === playerId,
@@ -283,9 +303,9 @@ export default function EditScoreModal({
             <h2 className="text-xl font-bold text-white">Edit Pertandingan</h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              {match.home_club.name_club}
+              {fixture.home_club.name_club}
               {" vs "}
-              {match.away_club.name_club}
+              {fixture.away_club.name_club}
             </p>
           </div>
 
@@ -354,7 +374,7 @@ export default function EditScoreModal({
 
               <div>
                 <label className="mb-2 block text-sm text-zinc-400">
-                  {match.home_club.name_club}
+                  {fixture.home_club.name_club}
                 </label>
 
                 <input
@@ -370,7 +390,7 @@ export default function EditScoreModal({
 
               <div>
                 <label className="mb-2 block text-sm text-zinc-400">
-                  {match.away_club.name_club}
+                  {fixture.away_club.name_club}
                 </label>
 
                 <input
@@ -455,12 +475,12 @@ export default function EditScoreModal({
                           }
                           className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white outline-none"
                         >
-                          <option value={match.home_club._id}>
-                            {match.home_club.name_club}
+                          <option value={fixture.home_club._id}>
+                            {fixture.home_club.name_club}
                           </option>
 
-                          <option value={match.away_club._id}>
-                            {match.away_club.name_club}
+                          <option value={fixture.away_club._id}>
+                            {fixture.away_club.name_club}
                           </option>
                         </select>
                       </div>
@@ -583,6 +603,13 @@ export default function EditScoreModal({
           {/* BUTTON */}
 
           <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleResetResult}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
+            >
+              Reset Result
+            </button>
             <button
               type="button"
               onClick={onClose}
