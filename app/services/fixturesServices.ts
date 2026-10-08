@@ -1,7 +1,70 @@
 import type { Fixture } from "~/types/api/fixtures";
-// const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL;
 
-const API_URL = "http://localhost:3000/api";
+export interface FixtureGoal {
+  _id?: string;
+  club: string;
+  scorer: string;
+  minute: number;
+  assist: string | null;
+}
+
+export interface Fixture {
+  _id: string;
+
+  season: string;
+
+  matchday: number;
+
+  home_club: {
+    _id: string;
+    name_club: string;
+    logo?: string | null;
+  };
+
+  away_club: {
+    _id: string;
+    name_club: string;
+    logo?: string | null;
+  };
+
+  home_score: number | null;
+
+  away_score: number | null;
+
+  status: "scheduled" | "finished" | "postponed";
+
+  goals: FixtureGoal[];
+}
+
+export interface UpdateFixtureResultPayload {
+  home_score: number;
+  away_score: number;
+  goals: FixtureGoal[];
+}
+
+export async function updateFixtureResult(
+  fixtureId: string,
+  payload: UpdateFixtureResultPayload,
+) {
+  const response = await fetch(`${API_URL}/fixture/${fixtureId}/result`, {
+    method: "PUT",
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal memperbarui hasil pertandingan");
+  }
+
+  return data;
+}
 
 export async function getClubFixtures(clubId: string): Promise<Fixture[]> {
   const response = await fetch(`${API_URL}/fixtures/club/${clubId}`);

@@ -51,7 +51,6 @@ export default function Matches() {
   // =========================
   // LOAD SAAT SEASON BERUBAH
   // =========================
-
   useEffect(() => {
     loadMatches();
   }, [season]);
@@ -59,7 +58,6 @@ export default function Matches() {
   // =========================
   // GENERATE MATCHES
   // =========================
-
   const handleGenerate = async () => {
     try {
       setLoading(true);
@@ -161,7 +159,6 @@ export default function Matches() {
 
           <div className="flex items-center gap-3">
             {/* Season */}
-
             <select
               value={season}
               onChange={(event) => setSeason(event.target.value)}
@@ -173,7 +170,6 @@ export default function Matches() {
             </select>
 
             {/* Generate */}
-
             <button
               type="button"
               onClick={handleGenerate}
@@ -186,7 +182,6 @@ export default function Matches() {
         </div>
 
         {/* ========================= ERROR ========================= */}
-
         {error && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
             {error}
@@ -194,7 +189,6 @@ export default function Matches() {
         )}
 
         {/* ========================= LOADING ========================= */}
-
         {loading && (
           <div className="py-10 text-center text-sm text-zinc-500">
             Loading matches...
@@ -202,7 +196,6 @@ export default function Matches() {
         )}
 
         {/* ========================= EMPTY ========================= */}
-
         {!loading && fixtures.length === 0 && (
           <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center">
             <p className="text-zinc-500">
@@ -220,7 +213,6 @@ export default function Matches() {
         )}
 
         {/* ========================= MATCH LIST ========================= */}
-
         {!loading && fixtures.length > 0 && (
           <div className=" grid grid-cols-2 gap-3">
             {fixtures.map((fixture) => (
@@ -234,7 +226,6 @@ export default function Matches() {
         )}
 
         {/* ========================= EDIT MODAL ========================= */}
-
         {selectedFixture && (
           <EditScoreModal
             fixture={selectedFixture}

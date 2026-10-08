@@ -56,9 +56,11 @@ export default function DesignCanvas({
           {/* Container isi paper. */}
           <div className="flex h-full w-full flex-col items-center">
             {/* Bagian judul klasemen. */}
-            <div className="mb-20 flex flex-col items-center">
+            <div className="mb-20 flex flex-col items-center w-full">
               {/* Judul utama. */}
-              <h1 className="text-6xl font-bold">Klasemen Pekan 21</h1>
+              <h1 className="text-6xl font-bold w-full text-center uppercase">
+                Klasemen Pekan ke-3
+              </h1>
 
               {/* Nama kompetisi. */}
               <h2 className="text-5xl">BRI Liga 1 2026/2027</h2>
