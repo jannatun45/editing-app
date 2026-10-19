@@ -1,18 +1,46 @@
-import type { Fixture } from "~/types/api/fixtures";
-// const API_URL = import.meta.env.VITE_API_URL;
+import type { Match } from "~/types/api/matches";
+const API_URL = import.meta.env.VITE_API_URL;
 
-const API_URL = "http://localhost:3000/api";
-
-export async function getClubFixtures(clubId: string): Promise<Fixture[]> {
-  const response = await fetch(`${API_URL}/fixtures/club/${clubId}`);
-
-  if (!response.ok) {
-    throw new Error("Gagal mengambil jadwal club");
-  }
-
-  return response.json();
+// Interface untuk input goal
+export interface FixtureGoal {
+  _id?: string;
+  club: string;
+  scorer: string;
+  minute: number;
+  assist: string | null;
+}
+// Update hasil pertandingan
+export interface UpdateFixtureResultPayload {
+  home_score: number;
+  away_score: number;
+  goals: FixtureGoal[];
 }
 
+// Update hasil pertandingan
+export async function updateFixtureResult(
+  fixtureId: string,
+  payload: UpdateFixtureResultPayload,
+) {
+  const response = await fetch(`${API_URL}/fixture/${fixtureId}/result`, {
+    method: "PUT",
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Gagal memperbarui hasil pertandingan");
+  }
+
+  return data;
+}
+
+// Update jadwal pertandingan
 export async function updateFixture(
   id: string,
   matchday: number,
@@ -28,7 +56,7 @@ export async function updateFixture(
       match_date: matchDate,
     }),
   });
-  console.log("updateFixture response:", response);
+  // console.log("updateFixture response:", response);
 
   if (!response.ok) {
     const error = await response.json();
@@ -85,21 +113,6 @@ export async function updateMatch(
   return result.data;
 }
 
-// Ambil semua pertandingan
-export async function getMatches(season?: string): Promise<Fixture[]> {
-  const url = season
-    ? `${API_URL}/fixtures?season=${encodeURIComponent(season)}`
-    : `${API_URL}/fixtures`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data pertandingan");
-  }
-
-  return response.json();
-}
-
 // Generate jadwal satu season
 export async function generateMatches(season: string) {
   const response = await fetch(`${API_URL}/matches/generate`, {
@@ -122,18 +135,18 @@ export async function generateMatches(season: string) {
 }
 
 // reset fixture
-export async function resetFixtureResult(id: string) {
-  const response = await fetch(`${API_URL}/fixtures/${id}/reset`, {
-    method: "PUT",
-  });
+// export async function resetFixtureResult(id: string) {
+//   const response = await fetch(`${API_URL}/fixtures/${id}/reset`, {
+//     method: "PUT",
+//   });
 
-  if (!response.ok) {
-    const error = await response.json();
+//   if (!response.ok) {
+//     const error = await response.json();
 
-    throw new Error(error.message || "Gagal mereset hasil pertandingan");
-  }
+//     throw new Error(error.message || "Gagal mereset hasil pertandingan");
+//   }
 
-  const result = await response.json();
+//   const result = await response.json();
 
-  return result.data;
-}
+//   return result.data;
+// }

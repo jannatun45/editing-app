@@ -51,7 +51,7 @@ export default function Download() {
   const scale = useCanvasScale();
 
   // Mengambil data dan function element dari custom hook.
-  const { elements, addText, handleMouseDown } = useCanvasElements(scale);
+  const { elements, handleMouseDown } = useCanvasElements(scale);
 
   // Function untuk melakukan download canvas.
   async function handleDownload() {
@@ -70,7 +70,11 @@ export default function Download() {
   return (
     // Template utama aplikasi.
     <Container>
-      <div className="">
+      {/* Molecule yang berisi tombol editor. */}
+      <div className="realative ">
+        <div className="absolute">
+          <CanvasActions onDownload={handleDownload} />
+        </div>
         {/* Organism utama editor canvas. */}
         <DesignCanvas
           paperRef={paperRef}
@@ -78,9 +82,6 @@ export default function Download() {
           elements={elements}
           onMouseDown={handleMouseDown}
         />
-
-        {/* Molecule yang berisi tombol editor. */}
-        <CanvasActions onAddText={addText} onDownload={handleDownload} />
       </div>
 
       {/* Organism sidebar editor. */}

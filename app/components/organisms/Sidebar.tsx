@@ -1,4 +1,12 @@
-import { ChevronDown, Menu } from "lucide-react";
+import {
+  ChevronDown,
+  Menu,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Shield,
+  Sparkles,
+} from "lucide-react";
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
 import { menuItems } from "~/data/menu_sidebar";
@@ -10,208 +18,270 @@ export default function Navbar() {
   const location = useLocation();
 
   function handleMenuClick(item: MenuItem) {
-    if (!item.children) {
-      setActiveMenu(item.label);
-      return;
-    }
+    if (!item.children) return;
 
-    if (activeMenu === item.label) {
-      setActiveMenu(null);
-    } else {
-      setActiveMenu(item.label);
-    }
+    setActiveMenu((current) => (current === item.label ? null : item.label));
   }
 
   return (
     <aside
       className={`
-        fixed
-        top-0
-        left-0
-        bottom-0
-        z-50
-        flex
-        flex-col
-        gap-2
-        border-r-2
-        border-white/10
-        bg-zinc-900
-        p-4
-        text-white
-        shadow-xl
-        backdrop-blur-xl
-        transition-all
-        duration-400
-        ${collapsed ? "w-20" : "w-[15.34%]"}
+        fixed inset-y-0 left-0 z-50 flex flex-col
+        border-r border-white/[0.08]
+        bg-[#080e19] text-white
+        shadow-2xl shadow-black/30
+        transition-[width] duration-300 ease-in-out
+        ${collapsed ? "w-[76px]" : "w-[270px]"}
       `}
     >
-      {/* Header */}
-      <header className="flex h-18 shrink-0 items-center border-b border-white/10">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-amber-400/[0.07] to-transparent" />
+
+      {/* ================= HEADER ================= */}
+      <header
+        className={`relative flex h-[88px] shrink-0 items-center border-b border-white/[0.08] ${
+          collapsed ? "justify-center px-2" : "gap-3 px-5"
+        }`}
+      >
         <button
           type="button"
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex h-[50px] w-[52px] items-center justify-center rounded-lg hover:bg-black/20"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-amber-400/30 hover:bg-amber-400/10 hover:text-amber-300"
         >
-          <Menu size={22} />
+          {collapsed ? (
+            <PanelLeftOpen size={19} />
+          ) : (
+            <PanelLeftClose size={19} />
+          )}
         </button>
 
         {!collapsed && (
-          <div className="relative leading-tight ">
-            <div
-              className="absolute text-xs -top-2 left-0.5 lowercase"
-              style={{ fontFamily: "Alex Brush, cursive" }}
-            >
-              My
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Shield size={22} className="shrink-0 text-amber-400" />
+
+              <span
+                className="truncate text-lg font-black uppercase tracking-[0.16em]"
+                style={{ fontFamily: "Orbitron, sans-serif" }}
+              >
+                Profile
+              </span>
             </div>
-            <div
-              className="text-2xl font-bold tracking-wider uppercase "
-              style={{ fontFamily: "Orbitron, sans-serif" }}
-            >
-              profile
-            </div>
-            <div
-              className="absolute text-gray-400 -bottom-1 right-0  "
-              style={{ fontFamily: "Alex Brush, cursive" }}
-            >
-              dark impulsive
+
+            <div className="mt-1 flex items-center gap-1.5 pl-[30px]">
+              <Sparkles size={10} className="text-amber-400" />
+              <span
+                className="text-[11px] text-slate-400"
+                style={{ fontFamily: "Alex Brush, cursive" }}
+              >
+                dark impulsive
+              </span>
             </div>
           </div>
         )}
       </header>
 
-      {/* Menu */}
-      <ul className="grid w-full list-none gap-1 p-0 ">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const hasActiveChild =
-            item.children?.some((child) => location.pathname === child.path) ??
-            false;
-          const isActive = activeMenu === item.label || hasActiveChild;
+      {/* ================= SECTION LABEL ================= */}
+      {!collapsed && (
+        <div className="relative px-5 pb-2 pt-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">
+            Workspace
+          </p>
+        </div>
+      )}
 
-          return (
-            <li key={item.label}>
-              {item.children ? (
-                /* MENU YANG PUNYA SUBMENU */
-                <button
-                  type="button"
-                  onClick={() => handleMenuClick(item)}
-                  className={`
-                  relative
-                  flex
-                  h-[50px]
-                  w-full
-                  items-center
-                  gap-4
-                  rounded-md
-                  px-4
-                  text-left
-                  font-normal
-                  transition
-                  duration-200
-                  hover:bg-black/10
-                  ${isActive ? "bg-black/30" : ""}
-                `}
-                >
-                  <Icon size={20} className="shrink-0" />
+      {/* ================= MENU ================= */}
+      <nav className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-5 pt-3">
+        <ul className="m-0 grid list-none gap-1.5 p-0">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
 
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1">{item.label}</span>
+            const hasActiveChild =
+              item.children?.some(
+                (child) => location.pathname === child.path,
+              ) ?? false;
 
-                      {item.children && (
+            const isExpanded = activeMenu === item.label;
+            const isActive = isExpanded || hasActiveChild;
+
+            const itemClass = `
+              group relative flex h-12 w-full items-center gap-3
+              rounded-xl px-3 text-left text-sm
+              transition-all duration-200
+              ${
+                isActive
+                  ? "border border-amber-400/15 bg-gradient-to-r from-amber-400/[0.14] to-amber-400/[0.03] text-amber-300"
+                  : "border border-transparent text-slate-400 hover:bg-white/[0.05] hover:text-white"
+              }
+              ${collapsed ? "justify-center px-0" : ""}
+            `;
+
+            return (
+              <li key={item.label}>
+                {item.children ? (
+                  <button
+                    type="button"
+                    onClick={() => handleMenuClick(item)}
+                    title={collapsed ? item.label : undefined}
+                    aria-expanded={isExpanded}
+                    className={itemClass}
+                  >
+                    {/* Active indicator */}
+                    {isActive && (
+                      <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full bg-amber-400" />
+                    )}
+
+                    <Icon
+                      size={19}
+                      strokeWidth={isActive ? 2.2 : 1.8}
+                      className={`shrink-0 transition ${
+                        isActive
+                          ? "text-amber-300"
+                          : "text-slate-400 group-hover:text-white"
+                      }`}
+                    />
+
+                    {!collapsed && (
+                      <>
+                        <span className="min-w-0 flex-1 truncate font-medium">
+                          {item.label}
+                        </span>
+
                         <ChevronDown
-                          size={18}
-                          className={`
-                          transition-transform
-                          duration-300
-                          ${isActive ? "rotate" : ""}
-                        `}
+                          size={16}
+                          className={`shrink-0 text-slate-500 transition-transform duration-300 ${
+                            isExpanded ? "rotate-180 text-amber-300" : ""
+                          }`}
                         />
-                      )}
-                    </>
-                  )}
-                </button>
-              ) : (
-                /* MENU YANG LANGSUNG NAVIGASI */
-                <NavLink
-                  to={item.path!}
-                  className={({ isActive }) => `
-                  relative
-                  flex
-                  h-[50px]
-                  w-full
-                  items-center
-                  gap-4
-                  rounded-md
-                  px-4
-                  text-sm
-                  text-left
-                  font-normal
-                  transition
-                  duration-200
-                  hover:bg-black/10
-                  ${isActive && "bg-black/30"}`}
-                >
-                  <Icon size={20} className="shrink-0" />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <NavLink
+                    to={item.path!}
+                    end
+                    title={collapsed ? item.label : undefined}
+                    className={({ isActive: routeIsActive }) => `
+                      ${itemClass}
+                      ${
+                        routeIsActive
+                          ? "!border-amber-400/15 !bg-gradient-to-r !from-amber-400/[0.14] !to-amber-400/[0.03] !text-amber-300"
+                          : ""
+                      }
+                    `}
+                  >
+                    {({ isActive: routeIsActive }) => (
+                      <>
+                        {routeIsActive && (
+                          <span className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-full bg-amber-400" />
+                        )}
 
-                  {!collapsed && <span className="flex-1">{item.label}</span>}
-                </NavLink>
-              )}
+                        <Icon
+                          size={19}
+                          strokeWidth={routeIsActive ? 2.2 : 1.8}
+                          className={`shrink-0 transition ${
+                            routeIsActive
+                              ? "text-amber-300"
+                              : "text-slate-400 group-hover:text-white"
+                          }`}
+                        />
 
-              {/* SUB MENU */}
-              {item.children && !collapsed && (
-                <div
-                  className={`
-                  grid
-                  overflow-hidden
-                  transition-all
-                  duration-500
-                  ${activeMenu === item.label ? "max-h-60" : "max-h-0"}
-                `}
-                >
-                  <ul className="grid">
-                    {item.children.map((child) => (
-                      <li key={child.label}>
-                        <NavLink
-                          to={child.path}
-                          className={({ isActive }) => `
-                          relative
-                          flex
-                          h-[50px]
-                          w-full
-                          items-center
-                          rounded-md
-                          pl-[52px]
-                          text-left
-                          text-xs
-                          text-white/90
-                          hover:bg-black/10
-                          ${isActive ? "bg-black/30" : ""}
-                        `}
-                        >
-                          <span
-                            className="
-                            absolute
-                            left-6
-                            top-1/2
-                            h-[5px]
-                            w-[5px]
-                            -translate-y-1/2
-                            rounded-full
-                            bg-white/35"
-                          />
+                        {!collapsed && (
+                          <span className="min-w-0 flex-1 truncate font-medium">
+                            {item.label}
+                          </span>
+                        )}
 
-                          {child.label}
-                        </NavLink>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                        {!collapsed && routeIsActive && (
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.7)]" />
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                )}
+
+                {/* ================= SUBMENU ================= */}
+                {item.children && !collapsed && (
+                  <div
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ${
+                      isExpanded
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <ul className="ml-5 mt-1 grid list-none gap-1 border-l border-white/10 py-1 pl-3">
+                        {item.children.map((child) => (
+                          <li key={child.label}>
+                            <NavLink
+                              to={child.path}
+                              end
+                              className={({ isActive }) => `
+                                relative flex min-h-10 items-center gap-2
+                                rounded-lg px-3 text-xs transition
+                                ${
+                                  isActive
+                                    ? "bg-amber-400/10 font-semibold text-amber-300"
+                                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                                }
+                              `}
+                            >
+                              {({ isActive }) => (
+                                <>
+                                  <span
+                                    className={`h-1.5 w-1.5 shrink-0 rounded-full transition ${
+                                      isActive ? "bg-amber-400" : "bg-slate-600"
+                                    }`}
+                                  />
+
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {child.label}
+                                  </span>
+                                </>
+                              )}
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* ================= FOOTER ================= */}
+      <footer className="relative shrink-0 border-t border-white/[0.08] p-3">
+        {collapsed ? (
+          <div
+            title="Dark Impulsive"
+            className="flex h-10 items-center justify-center rounded-xl bg-amber-400/[0.08] text-amber-400"
+          >
+            <Shield size={19} />
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-300 to-amber-600 text-sm font-black text-slate-950">
+              DI
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-slate-200">
+                Dark Impulsive
+              </p>
+              <p className="mt-1 text-[10px] text-slate-500">
+                Football Dashboard
+              </p>
+            </div>
+
+            <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+          </div>
+        )}
+      </footer>
     </aside>
   );
 }
