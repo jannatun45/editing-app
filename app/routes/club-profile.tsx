@@ -1,51 +1,43 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 
-import FixtureCard from "~/components/organisms/FictureCard";
-
+// import services
 import { getClubById, updateClub } from "~/services/clubsServices";
 import {
-  getClubFixtures,
-  getMatches,
-  resetFixtureResult,
-  updateFixture,
+  getClubMatches,
+  resetMatchResult,
   updateMatchScore,
-} from "~/services/fixturesServices";
+} from "~/services/matchServices";
 import { getStandings } from "~/services/standingServices";
-
+import { getPlayersByClub } from "~/services/playerServices";
+// import types
 import type { Club } from "~/types/api/clubs";
 import type { Standing } from "~/types/api/standings";
-
-import { getPlayersByClub } from "~/services/playerServices";
 import type { Player } from "~/types/api/player";
+import type { Match, MatchGoalInput } from "~/types/api/matches";
+// import components
 import AddPlayerModal from "~/components/organisms/AddPlayerModal";
-
-import type { Fixture, FixtureGoalInput } from "~/types/api/fixtures";
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 import EditClubModal from "~/components/organisms/EditClubModal";
+import MatchCard from "~/components/organisms/MatchCard";
 import {
-  ArrowUpDown,
-  BarChart3,
-  CalendarDays,
-  CircleCheck,
-  CircleX,
-  Goal,
-  MapPin,
-  Minus,
-  ShieldAlert,
-  Trophy,
-  ChartNoAxesCombined,
-} from "lucide-react";
+  getGoalEventsByClub,
+  type GoalEvent,
+} from "~/services/goalEventServices";
 
 export default function ClubProfile() {
   const { id } = useParams();
+
+  const [goalEvents, setGoalEvents] = useState<GoalEvent[]>([]);
+  const [loadingGoals, setLoadingGoals] = useState(false);
+  const [goalError, setGoalError] = useState("");
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
 
   const [club, setClub] = useState<Club | null>(null);
   const [standing, setStanding] = useState<Standing | null>(null);
-  const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
@@ -55,11 +47,12 @@ export default function ClubProfile() {
   const [showEditClub, setShowEditClub] = useState(false);
 
   const [error, setError] = useState("");
-
-  const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
-
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const season = "2026/2027";
 
+  // =========================
+  // LOAD CLUB DATA
+  // =========================
   useEffect(() => {
     if (!id) return;
 
@@ -68,8 +61,6 @@ export default function ClubProfile() {
         setLoadingPlayers(true);
 
         const data = await getPlayersByClub(id);
-
-        console.log("players in club profile -> ", data);
 
         setPlayers(data);
       } catch (error) {
@@ -111,9 +102,11 @@ export default function ClubProfile() {
       try {
         setLoadingFixtures(true);
 
-        const data = await getClubFixtures(id);
+        const data = await getClubMatches(id);
 
-        setFixtures(data);
+        console.log("Fixtures for club =>", id, data);
+
+        setMatches(data);
       } catch (error) {
         console.error(error);
       } finally {
@@ -124,6 +117,32 @@ export default function ClubProfile() {
     loadClubProfile();
     loadFixtures();
   }, [id]);
+
+  // ========================
+  // LOAD GOAL EVENTS
+  // ========================
+  useEffect(() => {
+    if (!id) return;
+
+    const loadGoalEvents = async () => {
+      try {
+        setLoadingGoals(true);
+        setGoalError("");
+
+        const data = await getGoalEventsByClub(id, season);
+
+        setGoalEvents(data);
+      } catch (error) {
+        setGoalError(
+          error instanceof Error ? error.message : "Gagal mengambil data gol",
+        );
+      } finally {
+        setLoadingGoals(false);
+      }
+    };
+
+    loadGoalEvents();
+  }, [id, season]);
 
   if (loading) {
     return <div>Loading club...</div>;
@@ -143,25 +162,38 @@ export default function ClubProfile() {
     matchDate: string,
     homeScore: number,
     awayScore: number,
-    goals: FixtureGoalInput[],
+    goals: MatchGoalInput[],
   ) => {
     // Pastikan ada fixture yang sedang dipilih.
-    if (!selectedFixture) {
+    if (!selectedMatch) {
       return;
     }
+    if (!id) {
+      setError("ID club tidak ditemukan");
+      return;
+    }
+    // console log done successfully add goals
+    // console.log("selectedMatch : ", selectedMatch);
 
     try {
       setLoading(true);
       setError("");
 
       // UPDATE JADWAL
-      await updateFixture(selectedFixture._id, matchday, matchDate);
+      // await updateMatch(selectedMatch._id, matchday, matchDate);
 
       // UPDATE SCORE + GOALS
-      await updateMatchScore(selectedFixture._id, homeScore, awayScore);
+      // Simpan jadwal, skor, dan seluruh Goal Event dalam satu request.
+      await updateMatchScore(selectedMatch._id, {
+        matchday,
+        match_date: matchDate,
+        home_score: homeScore,
+        away_score: awayScore,
+        goals,
+      });
 
       // REFRESH DATA
-      const updatedFixtures = await getClubFixtures(id!);
+      const updatedFixtures = await getClubMatches(id!);
 
       // Ambil semua standing season
       const standings = await getStandings(season);
@@ -171,10 +203,15 @@ export default function ClubProfile() {
         (standing) => standing.club._id === id,
       );
 
+      // Ambil ulang Goal Event agar tampilan langsung diperbarui.
+      const updatedGoals = await getGoalEventsByClub(id, season);
+
+      setGoalEvents(updatedGoals);
       setStanding(clubStanding ?? null);
-      setFixtures(updatedFixtures);
-      // TUTUP MODAL
-      setSelectedFixture(null);
+      setMatches(updatedFixtures);
+
+      // TUTUP MODAL setelah perubahan berhasil disimpan
+      setSelectedMatch(null);
     } catch (error) {
       setError(
         error instanceof Error
@@ -216,15 +253,15 @@ export default function ClubProfile() {
       setLoading(true);
       setError("");
 
-      if (!selectedFixture) {
+      if (!selectedMatch) {
         return;
       }
 
       // RESET MATCH
-      await resetFixtureResult(selectedFixture._id);
+      await resetMatchResult(selectedMatch._id);
 
       // REFRESH DATA
-      const updatedFixtures = await getClubFixtures(id!);
+      const updatedMatch = await getClubMatches(id!);
       // Ambil semua standing season
       const standings = await getStandings(season);
 
@@ -233,8 +270,8 @@ export default function ClubProfile() {
         (standing) => standing.club._id === id,
       );
 
-      setFixtures(updatedFixtures);
-      setSelectedFixture(null);
+      setMatches(updatedMatch);
+      setSelectedMatch(null);
       setStanding(clubStanding ?? null);
 
       // Kembalikan posisi scroll
@@ -257,7 +294,6 @@ export default function ClubProfile() {
   return (
     <div className="space-y-8">
       {/* ========================= CLUB HEADER ========================= */}
-
       <section className="relative isolate mt-2 min-h-[360px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 md:min-h-[420px]">
         {/* Background stadion */}
         <img
@@ -347,20 +383,6 @@ export default function ClubProfile() {
           <div className="mt-8 h-px bg-gradient-to-r from-amber-400/70 via-white/20 to-transparent" />
         </div>
       </section>
-      {/* <section className="mt-2 flex h-72 items-end justify-between rounded-tl-3xl bg-zinc-600">
-        <h1 className="mx-7 mb-7 text-5xl font-bold uppercase tracking-wider">
-          {club.name_club}
-        </h1>
-        <button
-          type="button"
-          onClick={() => setShowEditClub(true)}
-          className="rounded-lg bg-white px-4 py-2 font-medium text-black hover:bg-zinc-200"
-        >
-          Edit Club
-        </button>
-      </section> */}
-      {/* ========================= CLUB INFORMATION ========================= */}
-
       {/* ========================= CLUB LOCATION ========================= */}
       <section className="relative isolate overflow-hidden rounded-2xl border border-slate-700/70 bg-[#07111f]">
         {/* Background stadion */}
@@ -414,7 +436,6 @@ export default function ClubProfile() {
         {/* Gold accent */}
         <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-amber-300/40 to-transparent" />
       </section>
-
       {/* ========================= STANDING STATISTICS ========================= */}
       <section className="overflow-hidden rounded-2xl border border-slate-700/70 bg-gradient-to-br from-[#0b1728] via-[#07111f] to-[#050b14] p-5 md:p-8">
         {/* Heading */}
@@ -613,35 +634,6 @@ export default function ClubProfile() {
           </div>
         )}
       </section>
-
-      {/* ========================= CLUB INFORMATION ========================= */}
-
-      {/* <section>
-        <p>Stadium: {club.stadium}</p>
-        <p>District: {club.district}</p>
-      </section> */}
-
-      {/* ========================= STANDING ========================= */}
-      {/* <section>
-        <h2 className="mb-4 text-2xl font-bold">Statistics</h2>
-
-        {standing ? (
-          <div className="grid grid-cols-4 gap-4">
-            <p>Points: {standing.points}</p>
-            <p>Match: {standing.match}</p>
-            <p>Win: {standing.win}</p>
-            <p>Draw: {standing.draw}</p>
-            <p>Lose: {standing.lose}</p>
-            <p>GF: {standing.goals_for}</p>
-            <p>GA: {standing.goals_againts}</p>
-            <p>GD: {standing.goal_difference}</p>
-          </div>
-        ) : (
-          <p className="text-zinc-500">Belum ada data statistik.</p>
-        )}
-      </section> */}
-
-      {/* ========================= PLAYER CHARD ========================= */}
       {/* ========================= PLAYERS ========================= */}
       <section className="mt-10">
         {/* Header */}
@@ -788,28 +780,131 @@ export default function ClubProfile() {
           </div>
         )}
       </section>
+      {/* ========================= GOAL EVENTS ========================= */}
+      <section className="overflow-hidden rounded-2xl border border-slate-700/70 bg-gradient-to-br from-[#0b1728] via-[#07111f] to-[#050b14] p-5 md:p-8">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">
+              Match Statistics
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-white">Goal Events</h2>
+
+            <p className="mt-1 text-sm text-slate-400">
+              Pencetak gol dan pemberi assist musim {season}
+            </p>
+          </div>
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-amber-400/20 bg-amber-400/10 text-2xl">
+            ⚽
+          </div>
+        </div>
+
+        {loadingGoals ? (
+          <p className="py-8 text-center text-slate-400">Memuat data gol...</p>
+        ) : goalError ? (
+          <p className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">
+            {goalError}
+          </p>
+        ) : goalEvents.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-700 p-8 text-center">
+            <p className="text-3xl">⚽</p>
+
+            <h3 className="mt-3 font-bold text-white">Belum Ada Gol</h3>
+
+            <p className="mt-2 text-sm text-slate-400">
+              Data pencetak gol akan muncul setelah Goal Event berhasil
+              disimpan.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {goalEvents.map((goal) => (
+              <div
+                key={goal._id}
+                className="flex items-center gap-4 rounded-xl border border-white/10 bg-slate-900/60 p-4 transition hover:border-amber-400/30"
+              >
+                {/* Menit gol */}
+                <div className="flex h-12 min-w-14 items-center justify-center rounded-xl bg-amber-400/10 px-2 text-sm font-black text-amber-300">
+                  {goal.minute}'
+                </div>
+
+                {/* Foto pemain */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-slate-800">
+                  {goal.player.photo ? (
+                    <img
+                      src={`http://localhost:3000${goal.player.photo}`}
+                      alt={goal.player.name_player}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl">👤</span>
+                  )}
+                </div>
+
+                {/* Informasi gol */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-white">
+                    {goal.player.name_player}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    Pencetak gol
+                    {goal.player.number != null
+                      ? ` · #${goal.player.number}`
+                      : ""}
+                  </p>
+
+                  <p className="mt-2 text-sm text-slate-400">
+                    Assist:{" "}
+                    <span className="font-medium text-emerald-300">
+                      {goal.assist?.name_player || "Tanpa assist"}
+                    </span>
+                  </p>
+                </div>
+
+                {/* Logo klub */}
+                {goal.club.logo ? (
+                  <img
+                    src={`http://localhost:3000/images/clubs/${goal.club.logo}`}
+                    alt={goal.club.name_club}
+                    title={goal.club.name_club}
+                    className="h-10 w-10 shrink-0 object-contain"
+                  />
+                ) : (
+                  <div
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-amber-300"
+                    title={goal.club.name_club}
+                  >
+                    {goal.club.name_club.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
       {/* ========================= JADWAL PERTANDINGAN / SCHEDULE========================= */}
       <section>
         <h2 className="mb-4 text-2xl font-bold">Schedule</h2>
 
         {loadingFixtures && <p>Loading schedule...</p>}
 
-        {!loadingFixtures && fixtures.length === 0 && (
+        {!loadingFixtures && matches.length === 0 && (
           <p className="text-zinc-500">Belum ada jadwal pertandingan.</p>
         )}
 
         <div className=" grid grid-cols-2 gap-3">
-          {fixtures.map((fixture) => (
-            <FixtureCard
-              key={fixture._id}
-              fixture={fixture}
-              clubId={id!}
-              onClick={() => setSelectedFixture(fixture)}
+          {matches.map((match) => (
+            <MatchCard
+              key={match._id}
+              match={match}
+              // clubId={match._id!}
+              onClick={() => setSelectedMatch(match)}
             />
           ))}
         </div>
       </section>
-
       {/* ========================= MODAL ADD PLAYER ========================= */}
       {showAddPlayer && id && (
         <AddPlayerModal
@@ -828,7 +923,6 @@ export default function ClubProfile() {
           }}
         />
       )}
-
       {/* ========================= MODAL EDIT CLUB ========================= */}
       {showEditClub && (
         <EditClubModal
@@ -837,12 +931,11 @@ export default function ClubProfile() {
           onSave={handleSaveClub}
         />
       )}
-
       {/* ========================= MODAL ADD EDIT SCORE ========================= */}
-      {selectedFixture && (
+      {selectedMatch && (
         <EditScoreModal
-          fixture={selectedFixture}
-          onClose={() => setSelectedFixture(null)}
+          match={selectedMatch}
+          onClose={() => setSelectedMatch(null)}
           onSave={handleSaveScore}
           onReset={handleResetResult}
         />

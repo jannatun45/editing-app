@@ -1,4 +1,4 @@
-import type { Fixture } from "~/types/api/fixtures";
+import type { Fixture, FixtureGoalInput } from "~/types/api/fixtures";
 
 const API_URL = "http://localhost:3000/api";
 
@@ -38,31 +38,35 @@ export async function generateMatches(season: string) {
   return data;
 }
 
-// Update score pertandingan
-export async function updateMatchScore(
-  id: string,
-  home_score: number,
-  away_score: number,
-) {
-  const response = await fetch(`${API_URL}/fixtures/${id}/score`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      home_score,
-      away_score,
-    }),
-  });
+// export async function updateMatchScore(
+//   id: string,
+//   matchday: number,
+//   match_date: string,
+//   home_score: number,
+//   away_score: number,
+//   goals: FixtureGoalInput[],
+// ) {
+//   const response = await fetch(`${API_URL}/matches/${id}/score`, {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       matchday,
+//       match_date,
+//       home_score,
+//       away_score,
+//     }),
+//   });
 
-  const data = await response.json();
+//   const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal memperbarui score");
-  }
+//   if (!response.ok) {
+//     throw new Error(data.message || "Gagal memperbarui score");
+//   }
 
-  return data;
-}
+//   return data;
+// }
 
 // update match
 export async function updateMatch(

@@ -1,19 +1,16 @@
 import { useNavigate } from "react-router";
 import { CalendarDays, Clock3, ArrowUpRight, Trophy } from "lucide-react";
-import type { Fixture } from "~/types/api/fixtures";
+import type { Match } from "~/types/api/matches";
 
 type MatchCardProps = {
-  match: Fixture;
+  match: Match;
   onClick: () => void;
 };
 
 export default function MatchCard({ match, onClick }: MatchCardProps) {
   const navigate = useNavigate();
-
   const matchDate = match.match_date ? new Date(match.match_date) : null;
-
   const isFinished = match.status === "finished";
-
   const homeScore = match.home_score;
   const awayScore = match.away_score;
 

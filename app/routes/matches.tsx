@@ -5,30 +5,21 @@ import MatchCard from "~/components/organisms/MatchCard";
 import Container from "~/components/templates/Container";
 import {
   generateMatches,
-  getMatches,
   updateFixture,
   updateMatchScore,
 } from "~/services/fixturesServices";
-import type { Fixture, FixtureGoalInput } from "~/types/api/fixtures";
+import { getMatches } from "~/services/matchServices";
+import type { FixtureGoalInput } from "~/types/api/fixtures";
+import type { Match } from "~/types/api/matches";
 
 export default function Matches() {
-  // =========================
-  // STATE
-  // =========================
-
-  const [fixtures, setFixtures] = useState<Fixture[]>([]);
-
+  const [matches, setMatches] = useState<Match[]>([]);
   const [season, setSeason] = useState("2026/2027");
-
-  const [selectedFixture, setSelectedFixture] = useState<Fixture | null>(null);
-
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
-  // =========================
-  // LOAD MATCHES
-  // =========================
+  // load matches
   const loadMatches = async () => {
     try {
       setLoading(true);
@@ -36,7 +27,7 @@ export default function Matches() {
 
       const data = await getMatches(season);
 
-      setFixtures(data);
+      setMatches(data);
     } catch (error) {
       setError(
         error instanceof Error
@@ -48,9 +39,7 @@ export default function Matches() {
     }
   };
 
-  // =========================
-  // LOAD SAAT SEASON BERUBAH
-  // =========================
+  // Load matches saat season berubah
   useEffect(() => {
     loadMatches();
   }, [season]);
@@ -83,7 +72,7 @@ export default function Matches() {
     awayScore: number,
     goals: FixtureGoalInput[],
   ) => {
-    if (!selectedFixture) {
+    if (!selectedMatch) {
       return;
     }
 
@@ -91,26 +80,17 @@ export default function Matches() {
       setLoading(true);
       setError("");
 
-      // =========================
-      // UPDATE JADWAL
-      // =========================
+      // update fixture
+      await updateFixture(selectedMatch._id, matchday, matchDate);
 
-      await updateFixture(selectedFixture._id, matchday, matchDate);
+      // update score
+      await updateMatchScore(selectedMatch._id, homeScore, awayScore);
 
-      // =========================
-      // UPDATE SCORE + GOALS
-      // =========================
-
-      await updateMatchScore(selectedFixture._id, homeScore, awayScore);
-
-      // =========================
-      // REFRESH DATA
-      // =========================
-
+      // reload matches / refresh data
       await loadMatches();
 
       // Tutup modal
-      setSelectedFixture(null);
+      setSelectedMatch(null);
     } catch (error) {
       setError(
         error instanceof Error
@@ -132,7 +112,7 @@ export default function Matches() {
 
       await loadMatches();
 
-      setSelectedFixture(null);
+      setSelectedMatch(null);
     } catch (error) {
       setError(
         error instanceof Error
@@ -196,7 +176,7 @@ export default function Matches() {
         )}
 
         {/* ========================= EMPTY ========================= */}
-        {!loading && fixtures.length === 0 && (
+        {!loading && matches.length === 0 && (
           <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center">
             <p className="text-zinc-500">
               Belum ada jadwal pertandingan untuk season {season}.
@@ -213,23 +193,23 @@ export default function Matches() {
         )}
 
         {/* ========================= MATCH LIST ========================= */}
-        {!loading && fixtures.length > 0 && (
+        {!loading && matches.length > 0 && (
           <div className=" grid grid-cols-2 gap-3">
-            {fixtures.map((fixture) => (
+            {matches.map((match) => (
               <MatchCard
-                key={fixture._id}
-                match={fixture}
-                onClick={() => setSelectedFixture(fixture)}
+                key={match._id}
+                match={match}
+                onClick={() => setSelectedMatch(match)}
               />
             ))}
           </div>
         )}
 
         {/* ========================= EDIT MODAL ========================= */}
-        {selectedFixture && (
+        {selectedMatch && (
           <EditScoreModal
-            fixture={selectedFixture}
-            onClose={() => setSelectedFixture(null)}
+            match={selectedMatch}
+            onClose={() => setSelectedMatch(null)}
             onReset={handleResetResult}
             onSave={handleSaveMatch}
           />

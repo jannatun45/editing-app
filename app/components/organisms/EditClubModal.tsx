@@ -16,8 +16,11 @@ export default function EditClubModal({
   const [stadium, setStadium] = useState(club.stadium ?? "");
   const [district, setDistrict] = useState(club.district ?? "");
   const [logo, setLogo] = useState<File | null>(null);
+  const [points, setPoints] = useState(String(club.points ?? 0));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  console.log("EditClubModal rendered with club:", club);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,6 +34,7 @@ export default function EditClubModal({
       formData.append("name_club", nameClub);
       formData.append("stadium", stadium);
       formData.append("district", district);
+      formData.append("points", points);
 
       // Kirim logo hanya jika pengguna memilih logo baru
       if (logo) {
@@ -98,6 +102,20 @@ export default function EditClubModal({
             onChange={(event) => setDistrict(event.target.value)}
             className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:border-blue-500"
           />
+        </div>
+
+        {/* Input poin */}
+        <div className="space-y-2">
+          <label className="block text-sm text-zinc-300">Points</label>
+          <input
+            type="number"
+            value={points}
+            onChange={(event) => setPoints(event.target.value)}
+            required
+            step="1"
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:border-blue-500"
+          />
+          <p className="text-xs text-zinc-500">Masukkan jumlah poin klub.</p>
         </div>
 
         <div className="space-y-2">

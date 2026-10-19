@@ -26,6 +26,8 @@ export default function StandingPage() {
       setError("");
 
       const data = await getStandings(season);
+
+      // console.log("Fetched standings for season", season, ":", data);
       setStandings(data);
     } catch (error) {
       setError(
