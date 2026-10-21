@@ -41,33 +41,34 @@ export async function updateFixtureResult(
 }
 
 // Update jadwal pertandingan
-export async function updateFixture(
-  id: string,
-  matchday: number,
-  matchDate: string,
-) {
-  const response = await fetch(`${API_URL}/fixtures/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      matchday,
-      match_date: matchDate,
-    }),
-  });
-  // console.log("updateFixture response:", response);
+// export async function updateFixture(
+//   id: string,
+//   matchday: number,
+//   matchDate: string,
+// ) {
+//   const response = await fetch(`${API_URL}/fixtures/${id}`, {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       matchday,
+//       match_date: matchDate,
+//     }),
+//   });
+//   // console.log("updateFixture response:", response);
 
-  if (!response.ok) {
-    const error = await response.json();
+//   if (!response.ok) {
+//     const error = await response.json();
 
-    throw new Error(error.message || "Gagal memperbarui jadwal");
-  }
+//     throw new Error(error.message || "Gagal memperbarui jadwal");
+//   }
 
-  const result = await response.json();
+//   const result = await response.json();
 
-  return result.data;
-}
+//   return result.data;
+// }
+
 // Update score pertandingan
 export async function updateMatchScore(
   id: string,
@@ -134,7 +135,7 @@ export async function generateMatches(season: string) {
   return data;
 }
 
-// reset fixture
+// DONE sudah di pindah di matches services ( reset fixture )
 // export async function resetFixtureResult(id: string) {
 //   const response = await fetch(`${API_URL}/fixtures/${id}/reset`, {
 //     method: "PUT",

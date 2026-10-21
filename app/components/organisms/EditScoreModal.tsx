@@ -43,8 +43,6 @@ export default function EditScoreModal({
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [goals, setGoals] = useState<MatchGoalInput[]>([]);
   const [error, setError] = useState("");
-  console.log("match =>", match);
-  console.log("goals =>", goals);
 
   // =========================
   // LOAD PLAYERS

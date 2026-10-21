@@ -1,10 +1,18 @@
 import type { Match, MatchGoalInput } from "~/types/api/matches";
 
+type UpdateMatchScorePayload = {
+  matchday: number;
+  match_date: string;
+  home_score: number;
+  away_score: number;
+  goals: MatchGoalInput[];
+};
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 // DELETE MATCH / reset hasil pertandingan
 export async function resetMatchResult(id: string) {
-  const response = await fetch(`${API_URL}/match/${id}/reset`, {
+  const response = await fetch(`${API_URL}/match/${id}/result`, {
     method: "PUT",
   });
 
@@ -77,25 +85,17 @@ export async function getClubMatches(clubId: string): Promise<Match[]> {
   return response.json();
 }
 
-// type Update match score
-type UpdateMatchScorePayload = {
-  matchday: number;
-  match_date: string;
-  home_score: number;
-  away_score: number;
-  goals: MatchGoalInput[];
-};
 // UPDATE MATCH SCORE / update hasil pertandingan
 export async function updateMatchScore(
   id: string,
-  data: UpdateMatchScorePayload,
+  payload: UpdateMatchScorePayload,
 ) {
   const response = await fetch(`${API_URL}/matches/${id}/score`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
   // console.log Done data goals to be sent to the server / data goals sudah siap dikirim ke server

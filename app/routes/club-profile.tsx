@@ -10,6 +10,10 @@ import {
 } from "~/services/matchServices";
 import { getStandings } from "~/services/standingServices";
 import { getPlayersByClub } from "~/services/playerServices";
+import {
+  getGoalEventsByClub,
+  type GoalEvent,
+} from "~/services/goalEventServices";
 // import types
 import type { Club } from "~/types/api/clubs";
 import type { Standing } from "~/types/api/standings";
@@ -20,10 +24,6 @@ import AddPlayerModal from "~/components/organisms/AddPlayerModal";
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 import EditClubModal from "~/components/organisms/EditClubModal";
 import MatchCard from "~/components/organisms/MatchCard";
-import {
-  getGoalEventsByClub,
-  type GoalEvent,
-} from "~/services/goalEventServices";
 
 export default function ClubProfile() {
   const { id } = useParams();
@@ -193,7 +193,7 @@ export default function ClubProfile() {
       });
 
       // REFRESH DATA
-      const updatedFixtures = await getClubMatches(id!);
+      const updatedMatches = await getClubMatches(id!);
 
       // Ambil semua standing season
       const standings = await getStandings(season);
@@ -208,7 +208,7 @@ export default function ClubProfile() {
 
       setGoalEvents(updatedGoals);
       setStanding(clubStanding ?? null);
-      setMatches(updatedFixtures);
+      setMatches(updatedMatches);
 
       // TUTUP MODAL setelah perubahan berhasil disimpan
       setSelectedMatch(null);
@@ -708,11 +708,11 @@ export default function ClubProfile() {
 
         {/* Players */}
         {!loadingPlayers && players.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <div className="players-scroll flex flex-nowrap gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
             {players.map((player) => (
               <div
                 key={player._id}
-                className="group relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-2xl"
+                className="group relative w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-2xl"
               >
                 {/* Player Image */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">

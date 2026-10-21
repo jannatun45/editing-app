@@ -14,5 +14,34 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+
   scroll-behavior: smooth;
 }
+
+/* Scrollbar carousel pemain */
+.players-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+/* jalur scrollbar. */
+.players-scroll::-webkit-scrollbar-track {
+  background: var(--color-amber-50);
+  border-radius: 10px;
+}
+
+/* scrollbar */
+.players-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-amber-900);
+  border: 1px 1px 1px 1px;
+  border-radius: 10px;
+}
+
+.players-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-amber-600);
+}
+
+/* Firefox */
+/* .players-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #71717a #27272a;
+} */

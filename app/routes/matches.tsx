@@ -3,12 +3,8 @@ import { useEffect, useState } from "react";
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 import MatchCard from "~/components/organisms/MatchCard";
 import Container from "~/components/templates/Container";
-import {
-  generateMatches,
-  updateFixture,
-  updateMatchScore,
-} from "~/services/fixturesServices";
-import { getMatches } from "~/services/matchServices";
+import { generateMatches, updateMatchScore } from "~/services/fixturesServices";
+import { getMatches, updateMatch } from "~/services/matchServices";
 import type { FixtureGoalInput } from "~/types/api/fixtures";
 import type { Match } from "~/types/api/matches";
 
@@ -19,6 +15,8 @@ export default function Matches() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [currentMatchday, setCurrentMatchday] = useState<number | null>(null);
+
   // load matches
   const loadMatches = async () => {
     try {
@@ -28,6 +26,7 @@ export default function Matches() {
       const data = await getMatches(season);
 
       setMatches(data);
+      setCurrentMatchday(findNextMatchday(data));
     } catch (error) {
       setError(
         error instanceof Error
@@ -43,6 +42,40 @@ export default function Matches() {
   useEffect(() => {
     loadMatches();
   }, [season]);
+
+  const findNextMatchday = (data: Match[]) => {
+    const matchdays = [...new Set(data.map((match) => match.matchday))].sort(
+      (a, b) => a - b,
+    );
+
+    // Cari Matchday paling awal yang masih memiliki
+    // pertandingan yang belum selesai.
+    const nextMatchday = matchdays.find((matchday) =>
+      data.some(
+        (match) => match.matchday === matchday && match.status !== "finished",
+      ),
+    );
+
+    // Jika semua pertandingan sudah selesai,
+    // tampilkan Matchday terakhir.
+    return nextMatchday ?? matchdays[matchdays.length - 1] ?? 1;
+  };
+
+  const matchdays = [...new Set(matches.map((match) => match.matchday))].sort(
+    (a, b) => a - b,
+  );
+
+  const displayedMatches = matches.filter(
+    (match) => match.matchday === currentMatchday,
+  );
+
+  // const matchdays = Array.from(
+  //   new Set(matches.map((match) => match.matchday)),
+  // ).sort((a, b) => a - b);
+
+  // const displayedMatches = matches.filter(
+  //   (match) => match.matchday === matchdays[currentMatchday - 1],
+  // );
 
   // =========================
   // GENERATE MATCHES
@@ -81,7 +114,7 @@ export default function Matches() {
       setError("");
 
       // update fixture
-      await updateFixture(selectedMatch._id, matchday, matchDate);
+      await updateMatch(selectedMatch._id, matchday, matchDate);
 
       // update score
       await updateMatchScore(selectedMatch._id, homeScore, awayScore);
@@ -193,15 +226,77 @@ export default function Matches() {
         )}
 
         {/* ========================= MATCH LIST ========================= */}
+
+        {/* ========================= MATCH LIST ========================= */}
         {!loading && matches.length > 0 && (
-          <div className=" grid grid-cols-2 gap-3">
-            {matches.map((match) => (
-              <MatchCard
-                key={match._id}
-                match={match}
-                onClick={() => setSelectedMatch(match)}
-              />
-            ))}
+          <div className="space-y-5">
+            {/* Matchday Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  Matchday {currentMatchday}
+                </h2>
+
+                <p className="mt-1 text-sm text-zinc-500">
+                  {displayedMatches.length} pertandingan
+                </p>
+              </div>
+
+              <span className="rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-300">
+                {currentMatchday} / {matchdays.length}
+              </span>
+            </div>
+
+            {/* Match Cards */}
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {displayedMatches.map((match) => (
+                <MatchCard
+                  key={match._id}
+                  match={match}
+                  onClick={() => setSelectedMatch(match)}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Matchday */}
+            <div className="flex items-center justify-between border-t border-zinc-800 pt-5">
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentMatchday((prev) =>
+                    prev === null ? 1 : Math.max(matchdays[0] ?? 1, prev - 1),
+                  )
+                }
+                disabled={
+                  currentMatchday === null ||
+                  currentMatchday <= (matchdays[0] ?? 1)
+                }
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                ← Matchday Sebelumnya
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentMatchday((prev) =>
+                    prev === null
+                      ? 1
+                      : Math.min(
+                          matchdays[matchdays.length - 1] ?? 1,
+                          prev + 1,
+                        ),
+                  )
+                }
+                disabled={
+                  currentMatchday === null ||
+                  currentMatchday >= (matchdays[matchdays.length - 1] ?? 1)
+                }
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                Matchday Berikutnya →
+              </button>
+            </div>
           </div>
         )}
 
