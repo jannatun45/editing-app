@@ -65,25 +65,6 @@ function getAge(dateOfBirth: string | null | undefined): number | null {
 
   return age;
 }
-// function getAge(dateOfBirth?: string) {
-//   if (!dateOfBirth) return null;
-
-//   const birth = new Date(dateOfBirth);
-
-//   if (Number.isNaN(birth.getTime())) return null;
-
-//   const today = new Date();
-//   let age = today.getFullYear() - birth.getFullYear();
-
-//   const birthdayHasPassed =
-//     today.getMonth() > birth.getMonth() ||
-//     (today.getMonth() === birth.getMonth() &&
-//       today.getDate() >= birth.getDate());
-
-//   if (!birthdayHasPassed) age--;
-
-//   return age >= 0 ? age : null;
-// }
 
 function getPhotoUrl(photo?: string) {
   if (!photo) return "";
@@ -126,63 +107,6 @@ export default function PlayersPage() {
     null,
   );
   const [showAddPlayer, setShowAddPlayer] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadData() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [playersResponse, clubsResponse] = await Promise.all([
-          fetch(`${API_BASE}/players`, {
-            signal: controller.signal,
-          }),
-          fetch(`${API_BASE}/club`, {
-            signal: controller.signal,
-          }),
-        ]);
-
-        if (!playersResponse.ok || !clubsResponse.ok) {
-          throw new Error(
-            "Gagal mengambil data pemain atau klub. Periksa endpoint API.",
-          );
-        }
-
-        const playersData = await playersResponse.json();
-        const clubsData = await clubsResponse.json();
-
-        // Mendukung response array langsung atau { data: [...] }.
-        const playerList = Array.isArray(playersData)
-          ? playersData
-          : playersData.data;
-
-        const clubList = Array.isArray(clubsData) ? clubsData : clubsData.data;
-
-        if (!Array.isArray(playerList) || !Array.isArray(clubList)) {
-          throw new Error("Format response API tidak sesuai.");
-        }
-
-        setPlayers(playerList);
-        setClubs(clubList);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Terjadi kesalahan saat mengambil data.",
-        );
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-
-    loadData();
-
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -239,36 +163,38 @@ export default function PlayersPage() {
   ]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadClubs() {
       try {
-        const API_URL =
-          import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+        const response = await fetch(`${API_BASE}/club`, {
+          signal: controller.signal,
+        });
 
-        const response = await fetch(`${API_URL}/clubs`);
-        if (!response.ok) throw new Error("Gagal mengambil klub");
+        if (!response.ok) {
+          throw new Error("Gagal mengambil data klub.");
+        }
 
         const result = await response.json();
         const list = Array.isArray(result) ? result : result.data;
 
-        if (!cancelled && Array.isArray(list)) {
-          setClubs(list);
+        if (!Array.isArray(list)) {
+          throw new Error("Format response klub tidak sesuai.");
         }
+
+        setClubs(list);
       } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Gagal mengambil klub.",
-          );
-        }
+        if (err instanceof Error && err.name === "AbortError") return;
+
+        setError(
+          err instanceof Error ? err.message : "Gagal mengambil data klub.",
+        );
       }
     }
 
     loadClubs();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   async function refreshPlayers() {
