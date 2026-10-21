@@ -4,6 +4,7 @@ export default [
   route("/", "./routes/layout.tsx", [
     // child routes
     index("./routes/home.tsx"),
+    route("players", "./routes/players.tsx"),
     route("standing", "./routes/standing.tsx"),
     route("download", "./routes/download.tsx"),
 

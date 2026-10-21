@@ -1,8 +1,10 @@
+import type { Club } from "./clubs";
+
 export type Player = {
   _id: string;
-  club: string;
   name_player: string;
   number: number;
+  club: string | Club;
   position: "GK" | "DF" | "MF" | "FW";
   photo: string | null;
   contract_expires: string | null;
@@ -15,3 +17,16 @@ export type Player = {
   createdAt: string;
   updatedAt: string;
 };
+// interface Player {
+//   _id: string;
+//   name_player: string;
+//   number?: number;
+//   position: Position;
+//   photo?: string;
+//   club: string | Club;
+//   national?: string;
+//   date_of_birth?: string;
+//   goals?: number;
+//   assists?: number;
+//   market_value?: number | string;
+// }

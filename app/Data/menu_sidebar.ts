@@ -28,6 +28,11 @@ export const menuItems: MenuItem[] = [
     path: "/",
   },
   {
+    label: "players",
+    icon: Play,
+    path: "/players",
+  },
+  {
     label: "matches",
     icon: Play,
     path: "/matches",
