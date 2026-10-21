@@ -27,11 +27,16 @@ export default function EditScoreModal({
   onReset,
 }: EditScoreModalProps) {
   const [matchday, setMatchday] = useState(match.matchday.toString());
-  const [matchDate, setMatchDate] = useState(
-    match.match_date
-      ? new Date(match.match_date).toISOString().slice(0, 16)
-      : "",
-  );
+  const [matchDate, setMatchDate] = useState(() => {
+    if (!match.match_date) return "";
+
+    const date = new Date(match.match_date);
+
+    // Sesuaikan dengan zona waktu lokal browser
+    const timezoneOffset = date.getTimezoneOffset() * 60_000;
+
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+  });
   const [homeScore, setHomeScore] = useState(
     match.home_score?.toString() ?? "0",
   );
@@ -110,13 +115,13 @@ export default function EditScoreModal({
 
   const handleAddGoal = () => {
     setGoals((currentGoals) => [
-      ...currentGoals,
       {
         club: match.home_club._id,
         scorer: "",
         minute: "",
         assist: "",
       },
+      ...currentGoals,
     ]);
   };
 

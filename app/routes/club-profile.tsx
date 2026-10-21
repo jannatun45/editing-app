@@ -172,15 +172,10 @@ export default function ClubProfile() {
       setError("ID club tidak ditemukan");
       return;
     }
-    // console log done successfully add goals
-    // console.log("selectedMatch : ", selectedMatch);
 
     try {
       setLoading(true);
       setError("");
-
-      // UPDATE JADWAL
-      // await updateMatch(selectedMatch._id, matchday, matchDate);
 
       // UPDATE SCORE + GOALS
       // Simpan jadwal, skor, dan seluruh Goal Event dalam satu request.
@@ -262,6 +257,7 @@ export default function ClubProfile() {
 
       // REFRESH DATA
       const updatedMatch = await getClubMatches(id!);
+
       // Ambil semua standing season
       const standings = await getStandings(season);
 

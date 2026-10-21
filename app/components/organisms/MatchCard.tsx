@@ -39,6 +39,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
 
   const formattedDate = matchDate
     ? matchDate.toLocaleDateString("id-ID", {
+        timeZone: "Asia/Jakarta",
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -47,10 +48,27 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
 
   const formattedTime = matchDate
     ? matchDate.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
       })
     : null;
+
+  // const formattedDate = matchDate
+  //   ? matchDate.toLocaleDateString("id-ID", {
+  //       day: "2-digit",
+  //       month: "short",
+  //       year: "numeric",
+  //     })
+  //   : "Tanggal belum ditentukan";
+
+  // const formattedTime = matchDate
+  //   ? matchDate.toLocaleTimeString("id-ID", {
+  //       hour: "2-digit",
+  //       minute: "2-digit",
+  //     })
+  //   : null;
 
   const handleClubClick = (
     event: React.MouseEvent<HTMLButtonElement>,

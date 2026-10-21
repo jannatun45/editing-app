@@ -18,6 +18,7 @@ import {
   Handshake,
   Play,
   Volleyball,
+  CircleUserRound,
 } from "lucide-react";
 import type { MenuItem } from "~/types/sidenav/menuItems";
 
@@ -26,6 +27,11 @@ export const menuItems: MenuItem[] = [
     label: "Home",
     icon: Home,
     path: "/",
+  },
+  {
+    label: "Players",
+    icon: CircleUserRound,
+    path: "/players",
   },
   {
     label: "matches",

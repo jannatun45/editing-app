@@ -13,6 +13,7 @@ import {
 import Container from "~/components/templates/Container";
 import { getStandings } from "~/services/standingServices";
 import type { Standing } from "~/types/api/standings";
+// import { Club } from "../types/api/clubs";
 
 export default function StandingPage() {
   const [standings, setStandings] = useState<Standing[]>([]);
@@ -59,6 +60,25 @@ export default function StandingPage() {
 
     return "bg-zinc-800 text-zinc-400";
   };
+
+  const sanctionedClubIds = [
+    "6aaddf8688b36e2c1186f662",
+    "6aaddf6288b36e2c1186f661",
+  ];
+
+  const adjustedStandings = standings
+    .map((standing) => ({
+      ...standing,
+      adjustedPoints: sanctionedClubIds.includes(standing.club._id)
+        ? standing.points - 2
+        : standing.points,
+    }))
+    .sort(
+      (a, b) =>
+        b.adjustedPoints - a.adjustedPoints ||
+        b.goal_difference - a.goal_difference ||
+        b.goals_for - a.goals_for,
+    );
 
   return (
     <Container>
@@ -227,7 +247,7 @@ export default function StandingPage() {
                   </thead>
 
                   <tbody className="divide-y divide-white/[0.05]">
-                    {standings.map((standing, index) => (
+                    {adjustedStandings.map((standing, index) => (
                       <tr
                         key={standing._id}
                         className="group transition-colors duration-200 hover:bg-white/[0.035]"
@@ -323,7 +343,7 @@ export default function StandingPage() {
                         {/* Points */}
                         <td className="px-5 py-4 text-center">
                           <span className="inline-flex min-w-12 items-center justify-center rounded-lg bg-amber-400/10 px-3 py-2 text-base font-black tabular-nums text-amber-300 transition group-hover:bg-amber-400/15">
-                            {standing.points}
+                            {standing.adjustedPoints}
                           </span>
                         </td>
                       </tr>

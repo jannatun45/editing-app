@@ -1,6 +1,9 @@
+import type { Club } from "~/types/api/clubs";
+
 export type Player = {
   _id: string;
-  club: string;
+  // club: string;
+  club: string | Club | null;
   name_player: string;
   number: number;
   position: "GK" | "DF" | "MF" | "FW";

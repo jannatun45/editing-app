@@ -1,3 +1,4 @@
+import type { CreateMatchInput } from "~/components/organisms/CreateMatchModal";
 import type { Match, MatchGoalInput } from "~/types/api/matches";
 
 type UpdateMatchScorePayload = {
@@ -32,7 +33,7 @@ export async function updateMatch(
   matchday: number,
   matchDate: string,
 ) {
-  const response = await fetch(`${API_URL}/fixtures/${id}`, {
+  const response = await fetch(`${API_URL}/match/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -85,7 +86,7 @@ export async function getClubMatches(clubId: string): Promise<Match[]> {
   return response.json();
 }
 
-// UPDATE MATCH SCORE / update hasil pertandingan
+// UPDATE MATCH atau FIXTURE SCORE / update hasil pertandingan
 export async function updateMatchScore(
   id: string,
   payload: UpdateMatchScorePayload,
@@ -105,6 +106,24 @@ export async function updateMatchScore(
 
   if (!response.ok) {
     throw new Error(result.message || "Gagal memperbarui hasil pertandingan");
+  }
+
+  return result.data;
+}
+
+export async function createMatch(data: CreateMatchInput) {
+  const response = await fetch(`${API_URL}/match`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Gagal membuat pertandingan");
   }
 
   return result.data;
