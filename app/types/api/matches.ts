@@ -16,6 +16,7 @@ export type MatchGoal = {
   player: MatchPlayer;
   assist: MatchPlayer | null;
   is_penalty: boolean;
+  is_own_goal?: boolean;
 };
 
 export type MatchGoalInput = {
@@ -23,6 +24,7 @@ export type MatchGoalInput = {
   scorer: string;
   minute: string;
   assist: string;
+  is_own_goal: boolean;
 };
 
 export type Match = {

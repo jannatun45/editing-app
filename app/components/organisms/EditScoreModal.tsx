@@ -104,6 +104,7 @@ export default function EditScoreModal({
         typeof goal.assist === "object"
           ? (goal.assist?._id ?? "")
           : (goal.assist ?? ""),
+      is_own_goal: goal.is_own_goal ?? false,
     }));
 
     setGoals(existingGoals);
@@ -112,7 +113,6 @@ export default function EditScoreModal({
   // =========================
   // ADD GOAL
   // =========================
-
   const handleAddGoal = () => {
     setGoals((currentGoals) => [
       {
@@ -120,6 +120,7 @@ export default function EditScoreModal({
         scorer: "",
         minute: "",
         assist: "",
+        is_own_goal: false,
       },
       ...currentGoals,
     ]);
@@ -128,7 +129,6 @@ export default function EditScoreModal({
   // =========================
   // REMOVE GOAL
   // =========================
-
   const handleRemoveGoal = (index: number) => {
     setGoals((currentGoals) =>
       currentGoals.filter((_, goalIndex) => goalIndex !== index),
@@ -430,7 +430,13 @@ export default function EditScoreModal({
 
             <div className="space-y-4">
               {goals.map((goal, index) => {
-                const players = getPlayers(goal.club);
+                const players = getPlayers(
+                  goal.is_own_goal
+                    ? goal.club === match.home_club._id
+                      ? match.away_club._id
+                      : match.home_club._id
+                    : goal.club,
+                );
 
                 return (
                   <div
@@ -449,9 +455,8 @@ export default function EditScoreModal({
                       </button>
                     </div>
 
+                    {/* Club */}
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Club */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Club
@@ -475,7 +480,6 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Minute */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Minute
@@ -499,7 +503,6 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Scorer */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Scorer
@@ -527,7 +530,6 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Assist */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Assist
@@ -555,10 +557,42 @@ export default function EditScoreModal({
                             ))}
                         </select>
                       </div>
+                      {/* is own goal */}
+                      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                        <input
+                          type="checkbox"
+                          checked={goal.is_own_goal}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+
+                            setGoals((currentGoals) =>
+                              currentGoals.map((item, goalIndex) =>
+                                goalIndex === index
+                                  ? {
+                                      ...item,
+                                      is_own_goal: checked,
+                                      scorer: "",
+                                      assist: "",
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          className="h-4 w-4 accent-white"
+                        />
+
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            Gol Bunuh Diri
+                          </p>
+                          <p className="text-xs text-zinc-500">
+                            Pemain mencetak gol ke gawang timnya sendiri
+                          </p>
+                        </div>
+                      </label>
                     </div>
 
                     {/* Preview */}
-
                     {goal.scorer && (
                       <div className="mt-4 rounded-lg bg-zinc-900 p-3 text-sm">
                         <span className="text-white">
@@ -567,7 +601,7 @@ export default function EditScoreModal({
 
                         <span className="text-zinc-500"> {goal.minute}'</span>
 
-                        {goal.assist && (
+                        {!goal.is_own_goal && (
                           <span className="text-zinc-500">
                             {" "}
                             • Assist: {getPlayerName(goal.assist)}

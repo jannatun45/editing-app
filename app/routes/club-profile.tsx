@@ -288,7 +288,7 @@ export default function ClubProfile() {
     }
   };
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-48">
       {/* ========================= CLUB HEADER ========================= */}
       <section className="relative isolate mt-2 min-h-[360px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 md:min-h-[420px]">
         {/* Background stadion */}
