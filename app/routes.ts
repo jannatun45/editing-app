@@ -3,23 +3,18 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 export default [
   route("/", "./routes/layout.tsx", [
     // child routes
-    index("./routes/home.tsx"),
+    index("./routes/matches.tsx"),
     route("standing", "./routes/standing.tsx"),
     route("players", "./routes/players.tsx"),
     route("download", "./routes/download.tsx"),
 
     route("club/:id", "routes/club-profile.tsx"),
-    route("matches", "routes/matches.tsx"),
 
     // Halaman poster pertandingan
     route("match/:id", "routes/Poster.tsx"),
 
     route("top-scorers", "routes/top-scorers.tsx"),
     route("top-assists", "routes/top-assists.tsx"),
-
-    // nested route
-    route("learning/snippet", "./routes/learning/snippet.tsx"),
-    route("learning/git", "./routes/learning/git.tsx"),
 
     route("*", "./routes/not-found.tsx"),
   ]),
