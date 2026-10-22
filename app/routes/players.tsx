@@ -1,21 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Player } from "~/types/api/player";
 import type { Club } from "~/types/api/clubs";
+import type { Player } from "~/types/api/player";
 
-import {
-  getAllPlayers,
-  createPlayer,
-  updatePlayer,
-  transferPlayer,
-  deletePlayer,
-  type PlayerListResponse,
-  type PlayerFilters,
-} from "~/services/playerServices";
-
-import PlayerFormModal from "~/components/organisms/PlayerFormModal";
-import TransferPlayerModal from "~/components/organisms/TransferPlayerModal";
-
-const API_BASE = import.meta.env.VITE_API_URL;
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 type Position = "GK" | "DF" | "MF" | "FW";
 
@@ -43,27 +30,24 @@ function getClubName(club: Player["club"]) {
     : club?.name_club || "Unknown Club";
 }
 
-function getAge(dateOfBirth: string | null | undefined): number | null {
+function getAge(dateOfBirth?: string) {
   if (!dateOfBirth) return null;
 
-  const birthDate = new Date(dateOfBirth);
+  const birth = new Date(dateOfBirth);
 
-  if (Number.isNaN(birthDate.getTime())) return null;
+  if (Number.isNaN(birth.getTime())) return null;
 
   const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
 
-  let age = today.getFullYear() - birthDate.getFullYear();
+  const birthdayHasPassed =
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() &&
+      today.getDate() >= birth.getDate());
 
-  const monthDifference = today.getMonth() - birthDate.getMonth();
+  if (!birthdayHasPassed) age--;
 
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-
-  return age;
+  return age >= 0 ? age : null;
 }
 
 function getPhotoUrl(photo?: string) {
@@ -77,15 +61,6 @@ function getPhotoUrl(photo?: string) {
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [pagination, setPagination] = useState<
-    PlayerListResponse["pagination"]
-  >({
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0,
-  });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -94,196 +69,67 @@ export default function PlayersPage() {
   const [positionFilter, setPositionFilter] = useState("all");
   const [nationalFilter, setNationalFilter] = useState("all");
   const [ageFilter, setAgeFilter] = useState("all");
-  const [season, setSeason] = useState("2026/2027");
-  const [sort, setSort] = useState("name");
   const [sortBy, setSortBy] = useState("name");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
-  const [limit, setLimit] = useState(12);
-
-  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [transferringPlayer, setTransferringPlayer] = useState<Player | null>(
-    null,
-  );
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadPlayers() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const filters: PlayerFilters = {
-          page,
-          limit,
-          search,
-          club: clubFilter,
-          position: positionFilter,
-          national: nationalFilter,
-          ageGroup: ageFilter,
-          season,
-          sort,
-        };
-
-        const result = await getAllPlayers(filters);
-
-        if (cancelled) return;
-
-        setPlayers(result.data);
-        setPagination(result.pagination);
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : "Gagal mengambil data pemain.",
-          );
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadPlayers();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    page,
-    limit,
-    search,
-    clubFilter,
-    positionFilter,
-    nationalFilter,
-    ageFilter,
-    season,
-    sort,
-  ]);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    async function loadClubs() {
+    async function loadData() {
       try {
-        const response = await fetch(`${API_BASE}/club`, {
-          signal: controller.signal,
-        });
+        setLoading(true);
+        setError("");
 
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data klub.");
+        const [playersResponse, clubsResponse] = await Promise.all([
+          fetch(`${API_BASE}/players`, {
+            signal: controller.signal,
+          }),
+          fetch(`${API_BASE}/club`, {
+            signal: controller.signal,
+          }),
+        ]);
+
+        if (!playersResponse.ok || !clubsResponse.ok) {
+          throw new Error(
+            "Gagal mengambil data pemain atau klub. Periksa endpoint API.",
+          );
         }
 
-        const result = await response.json();
-        const list = Array.isArray(result) ? result : result.data;
+        const playersData = await playersResponse.json();
+        const clubsData = await clubsResponse.json();
 
-        if (!Array.isArray(list)) {
-          throw new Error("Format response klub tidak sesuai.");
+        // Mendukung response array langsung atau { data: [...] }.
+        const playerList = Array.isArray(playersData)
+          ? playersData
+          : playersData.data;
+
+        const clubList = Array.isArray(clubsData) ? clubsData : clubsData.data;
+
+        if (!Array.isArray(playerList) || !Array.isArray(clubList)) {
+          throw new Error("Format response API tidak sesuai.");
         }
 
-        setClubs(list);
+        setPlayers(playerList);
+        setClubs(clubList);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
 
         setError(
-          err instanceof Error ? err.message : "Gagal mengambil data klub.",
+          err instanceof Error
+            ? err.message
+            : "Terjadi kesalahan saat mengambil data.",
         );
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
 
-    loadClubs();
+    loadData();
 
     return () => controller.abort();
   }, []);
-
-  async function refreshPlayers() {
-    const result = await getAllPlayers({
-      page,
-      limit,
-      search,
-      club: clubFilter,
-      position: positionFilter,
-      national: nationalFilter,
-      ageGroup: ageFilter,
-      season,
-      sort,
-    });
-
-    setPlayers(result.data);
-    setPagination(result.pagination);
-  }
-
-  async function handleCreatePlayer(formData: FormData) {
-    await createPlayer(formData);
-    setPage(1);
-
-    const result = await getAllPlayers({
-      page: 1,
-      limit,
-      search,
-      club: clubFilter,
-      position: positionFilter,
-      national: nationalFilter,
-      ageGroup: ageFilter,
-      season,
-      sort,
-    });
-
-    setPlayers(result.data);
-    setPagination(result.pagination);
-  }
-
-  async function handleUpdatePlayer(formData: FormData) {
-    if (!editingPlayer) return;
-
-    await updatePlayer(editingPlayer._id, formData);
-    setEditingPlayer(null);
-    await refreshPlayers();
-  }
-
-  async function handleTransferPlayer(clubId: string) {
-    if (!transferringPlayer) return;
-
-    await transferPlayer(transferringPlayer._id, clubId);
-    setTransferringPlayer(null);
-    await refreshPlayers();
-  }
-
-  async function handleDeletePlayer(player: Player) {
-    const confirmed = window.confirm(
-      `Yakin ingin menghapus ${player.name_player}?`,
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setError("");
-      await deletePlayer(player._id);
-
-      // Jika item terakhir di halaman dihapus, kembali satu halaman.
-      const nextPage = players.length === 1 && page > 1 ? page - 1 : page;
-
-      setPage(nextPage);
-
-      const result = await getAllPlayers({
-        page: nextPage,
-        limit,
-        search,
-        club: clubFilter,
-        position: positionFilter,
-        national: nationalFilter,
-        ageGroup: ageFilter,
-        season,
-        sort,
-      });
-
-      setPlayers(result.data);
-      setPagination(result.pagination);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus pemain.");
-    }
-  }
 
   const nationalities = useMemo(
     () =>
@@ -573,30 +419,21 @@ export default function PlayersPage() {
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-3">
-              <label className="flex items-center gap-2 text-sm text-zinc-400">
-                Per halaman
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setPage(1);
-                  }}
-                  className="rounded-lg border border-white/10 bg-[#131419] px-2 py-2 text-white outline-none"
-                >
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
-                </select>
-              </label>
-
-              <button
-                onClick={() => setShowAddPlayer(true)}
-                className="rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-black transition hover:bg-amber-300"
+            <label className="flex items-center gap-2 text-sm text-zinc-400">
+              Per halaman
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-lg border border-white/10 bg-[#131419] px-2 py-2 text-white outline-none"
               >
-                + Add Player
-              </button>
-            </div>
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+                <option value={48}>48</option>
+              </select>
+            </label>
           </div>
 
           {error && (
@@ -644,7 +481,6 @@ export default function PlayersPage() {
                   <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[#24242a] via-[#17181d] to-[#101115]">
                     <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-400/[0.07] blur-2xl" />
 
-                    {/* number */}
                     <div className="absolute left-4 top-4 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5">
                       <span className="text-xs text-zinc-400">PLAYER</span>
                       <p className="text-xl font-bold text-amber-400">
@@ -652,7 +488,6 @@ export default function PlayersPage() {
                       </p>
                     </div>
 
-                    {/* img */}
                     {player.photo ? (
                       <img
                         src={getPhotoUrl(player.photo)}
@@ -674,7 +509,6 @@ export default function PlayersPage() {
                       </div>
                     )}
 
-                    {/* position */}
                     <span className="absolute bottom-3 right-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-zinc-300">
                       {positionLabels[player.position] ?? player.position}
                     </span>
@@ -702,21 +536,18 @@ export default function PlayersPage() {
                     </div>
 
                     <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-xl border border-white/[0.06] bg-black/20 py-3">
-                      {/* age */}
                       <div className="text-center">
                         <p className="text-lg font-bold">
                           {getAge(player.date_of_birth) ?? "—"}
                         </p>
                         <p className="mt-1 text-[11px] text-zinc-500">Age</p>
                       </div>
-                      {/* goals */}
                       <div className="text-center">
                         <p className="text-lg font-bold text-amber-400">
                           {player.goals ?? 0}
                         </p>
                         <p className="mt-1 text-[11px] text-zinc-500">Goals</p>
                       </div>
-                      {/* assists */}
                       <div className="text-center">
                         <p className="text-lg font-bold">
                           {player.assists ?? 0}
@@ -727,13 +558,11 @@ export default function PlayersPage() {
                       </div>
                     </div>
 
-                    {/* national */}
                     <div className="flex items-center justify-between gap-2">
                       <p className="truncate text-xs text-zinc-500">
                         {player.national || "Nationality not available"}
                       </p>
 
-                      {/* views detail */}
                       <button
                         onClick={() => setSelectedPlayer(player)}
                         className="shrink-0 rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-semibold text-amber-400 transition hover:bg-amber-400 hover:text-black"
@@ -749,60 +578,35 @@ export default function PlayersPage() {
 
           {/* Pagination */}
           {!loading && filteredPlayers.length > 0 && (
-            <div className="mt-6 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
+            <div className="mt-6 flex flex-col justify-between gap-4 border-t border-white/[0.08] pt-5 sm:flex-row sm:items-center">
               <p className="text-sm text-zinc-500">
-                Total {pagination.total} pemain
+                Halaman {currentPage} dari {totalPages}
                 {" · "}
-                Halaman {pagination.page} dari {pagination.totalPages}
+                {filteredPlayers.length} pemain
               </p>
 
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
-                  disabled={page <= 1 || loading}
-                  onClick={() => setPage((current) => current - 1)}
-                  className="rounded-lg border border-white/10 px-4 py-2 text-sm disabled:opacity-30"
+                  disabled={currentPage === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   Previous
                 </button>
 
+                <span className="min-w-10 rounded-lg bg-amber-400 px-3 py-2 text-center text-sm font-bold text-black">
+                  {currentPage}
+                </span>
+
                 <button
-                  disabled={page >= pagination.totalPages || loading}
-                  onClick={() => setPage((current) => current + 1)}
-                  className="rounded-lg border border-white/10 px-4 py-2 text-sm disabled:opacity-30"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   Next
                 </button>
               </div>
             </div>
-            // <div className="mt-6 flex flex-col justify-between gap-4 border-t border-white/[0.08] pt-5 sm:flex-row sm:items-center">
-            //   <p className="text-sm text-zinc-500">
-            //     Halaman {currentPage} dari {totalPages}
-            //     {" · "}
-            //     {filteredPlayers.length} pemain
-            //   </p>
-
-            //   <div className="flex items-center gap-2">
-            //     <button
-            //       disabled={currentPage === 1}
-            //       onClick={() => setPage((p) => Math.max(1, p - 1))}
-            //       className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
-            //     >
-            //       Previous
-            //     </button>
-
-            //     <span className="min-w-10 rounded-lg bg-amber-400 px-3 py-2 text-center text-sm font-bold text-black">
-            //       {currentPage}
-            //     </span>
-
-            //     <button
-            //       disabled={currentPage === totalPages}
-            //       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            //       className="rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
-            //     >
-            //       Next
-            //     </button>
-            //   </div>
-            // </div>
           )}
         </section>
       </div>
@@ -911,32 +715,6 @@ export default function PlayersPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {showAddPlayer && (
-        <PlayerFormModal
-          clubs={clubs}
-          onClose={() => setShowAddPlayer(false)}
-          onSave={handleCreatePlayer}
-        />
-      )}
-
-      {editingPlayer && (
-        <PlayerFormModal
-          player={editingPlayer}
-          clubs={clubs}
-          onClose={() => setEditingPlayer(null)}
-          onSave={handleUpdatePlayer}
-        />
-      )}
-
-      {transferringPlayer && (
-        <TransferPlayerModal
-          player={transferringPlayer}
-          clubs={clubs}
-          onClose={() => setTransferringPlayer(null)}
-          onTransfer={handleTransferPlayer}
-        />
       )}
     </main>
   );
