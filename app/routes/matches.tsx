@@ -4,7 +4,6 @@ import CreateMatchModal from "~/components/organisms/CreateMatchModal";
 
 import EditScoreModal from "~/components/organisms/EditScoreModal";
 import MatchCard from "~/components/organisms/MatchCard";
-import Container from "~/components/templates/Container";
 import { getClubs } from "~/services/clubsServices";
 import { generateMatches } from "~/services/fixturesServices";
 import {

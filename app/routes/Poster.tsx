@@ -287,7 +287,7 @@ export default function MatchPosterPage() {
             >
               <div
                 ref={posterRef}
-                className="relative isolate flex w-full flex-col overflow-hidden bg-[#08090d] py-9 px-16"
+                className="relative isolate flex w-full flex-col overflow-hidden bg-[#08090d]"
                 style={{
                   aspectRatio: `${selectedSize.width}/${selectedSize.height}`,
                   backgroundImage: `
@@ -307,41 +307,17 @@ export default function MatchPosterPage() {
                   backgroundRepeat: "no-repeat",
                 }}
               >
+                {/* garis horizontal sebelah kiri */}
                 <div
                   className="pointer-events-none absolute inset-y-0 left-0 w-0.75"
                   style={{ backgroundColor: accent }}
                 />
-
                 {/* garis diagonal pada background */}
                 <div className="pointer-events-none absolute left-[-25%] top-[12%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
                 <div className="pointer-events-none absolute right-[-25%] top-[20%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
 
                 {/* header */}
-                <header className="relative z-10 flex items-center justify-between gap-3 border-b border-white/20 pb-3">
-                  <div className="flex flex-col gap-2">
-                    <p
-                      className="text-[clamp(8px,1.8vw,12px)] font-black tracking-[0.18em] px-2"
-                      style={{ backgroundColor: accent, color: "#08090d" }}
-                    >
-                      MATCHDAY {match.matchday ?? "-"}
-                    </p>
-                    <div className="flex flex-col">
-                      <p className="whitespace-nowrap leading-none text-[clamp(7px,1.6vw,11px)] font-black">
-                        {dateLabel}
-                      </p>
-                      <p className="mt-1 flex items-center gap-1 text-[clamp(7px,1.5vw,10px)] text-white/60">
-                        <Clock3 size={11} /> {timeLabel}
-                      </p>
-                    </div>
-                    {/* <p
-                      className="mt-1 inline-block px-2 py-1 text-[clamp(7px,1.5vw,10px)] font-black tracking-widest"
-                      style={{ backgroundColor: accent, color: "#08090d" }}
-                    >
-                      {finished
-                        ? "FULL TIME"
-                        : (match.status ?? "UPCOMING").toUpperCase()}
-                    </p> */}
-                  </div>
+                <header className="relative z-10 flex items-start justify-between gap-3 border-b border-white/5 pb-3 mt-4 mx-4">
                   <div className="flex items-center gap-2">
                     <Trophy size={22} style={{ color: accent }} />
                     <div>
@@ -353,22 +329,26 @@ export default function MatchPosterPage() {
                       </p>
                     </div>
                   </div>
-
-                  {/* time */}
-                  {/* <div className="flex min-w-0 items-start gap-2">
-                    <MapPin
-                      size={14}
-                      style={{ color: accent }}
-                      className="mt-0.5 shrink-0"
-                    />
-                    <p className="break-words text-[clamp(7px,1.6vw,11px)] font-bold uppercase">
-                      {match.home_club?.stadium ?? "Stadion belum tersedia"}
+                  <div className="flex flex-col gap-2">
+                    <p
+                      className="text-[clamp(8px,1.8vw,12px)] text-zinc-900 font-black tracking-[0.18em] px-2"
+                      style={{ backgroundColor: accent }}
+                    >
+                      MATCHDAY {match.matchday ?? "-"}
                     </p>
-                  </div> */}
+                    <div className="flex flex-col ">
+                      <p className="whitespace-nowrap leading-none text-[clamp(7px,1.6vw,11px)] font-black">
+                        {dateLabel}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-[clamp(7px,1.5vw,10px)] text-white/60">
+                        <Clock3 size={11} /> {timeLabel}
+                      </p>
+                    </div>
+                  </div>
                 </header>
 
                 {/* main */}
-                <main className="relative z-10 mt-auto w-full ">
+                <main className="relative z-10 mt-auto w-full py-9 px-16">
                   <div className="relative z-10 mt-[5%] grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-[3%] mb-4">
                     {/* home logo */}
                     <div className="">
@@ -414,7 +394,6 @@ export default function MatchPosterPage() {
                         <span className="text-sm" style={{ color: accent }}>
                           Std.
                         </span>
-
                         <p className="max-w-full wrap-break-words text-[clamp(7px,8px,11px)] font-bold uppercase">
                           {match.home_club?.stadium || "Stadion belum tersedia"}
                         </p>

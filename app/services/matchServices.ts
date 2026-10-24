@@ -28,33 +28,64 @@ export async function resetMatchResult(id: string) {
   return result.data;
 }
 // Update jadwal pertandingan
+
 export async function updateMatch(
   id: string,
   matchday: number,
   matchDate: string,
+  posterFile?: File | null,
 ) {
+  const formData = new FormData();
+
+  formData.append("matchday", String(matchday));
+  formData.append("match_date", matchDate);
+
+  // Tambahkan poster jika pengguna memilih gambar
+  if (posterFile) {
+    formData.append("poster", posterFile);
+  }
+
   const response = await fetch(`${API_URL}/match/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      matchday,
-      match_date: matchDate,
-    }),
+    body: formData,
   });
-  // console.log("updateFixture response:", response);
 
   if (!response.ok) {
     const error = await response.json();
-
     throw new Error(error.message || "Gagal memperbarui jadwal");
   }
 
   const result = await response.json();
-
   return result.data;
 }
+
+// export async function updateMatch(
+//   id: string,
+//   matchday: number,
+//   matchDate: string,
+// ) {
+//   const response = await fetch(`${API_URL}/match/${id}`, {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       matchday,
+//       match_date: matchDate,
+//     }),
+//   });
+//   // console.log("updateFixture response:", response);
+
+//   if (!response.ok) {
+//     const error = await response.json();
+
+//     throw new Error(error.message || "Gagal memperbarui jadwal");
+//   }
+
+//   const result = await response.json();
+
+//   return result.data;
+// }
 
 // =========================
 // NEW DATA ADDED / data baru ditambahkan
