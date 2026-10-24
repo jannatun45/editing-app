@@ -5,6 +5,7 @@ export type MatchPlayer = {
 export type MatchClub = {
   _id: string;
   name_club: string;
+  stadium?: string;
   logo: string | null;
 };
 
@@ -40,4 +41,5 @@ export type Match = {
   goals: MatchGoal[];
   createdAt: string;
   updatedAt: string;
+  stadium?: string;
 };

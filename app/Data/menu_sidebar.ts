@@ -35,9 +35,4 @@ export const menuItems: MenuItem[] = [
     icon: Handshake,
     path: "/top-assists",
   },
-  {
-    label: "download",
-    icon: ArrowDownToLine,
-    path: "/download",
-  },
 ];

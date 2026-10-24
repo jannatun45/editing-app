@@ -75,6 +75,18 @@ export async function getMatches(season?: string): Promise<Match[]> {
   return response.json();
 }
 
+export async function getMatchById(id: string): Promise<Match> {
+  const response = await fetch(`${API_URL}/match/${id}`);
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Gagal mengambil detail pertandingan");
+  }
+
+  return result.data;
+}
+
 // GET MATCH SCHEDULE BY CLUB / ambil jadwal pertandingan berdasarkan club
 export async function getClubMatches(clubId: string): Promise<Match[]> {
   const response = await fetch(`${API_URL}/matches/club/${clubId}`);

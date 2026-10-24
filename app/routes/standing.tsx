@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import {
   Trophy,
@@ -8,11 +8,14 @@ import {
   RefreshCw,
   AlertCircle,
   ChevronDown,
+  ImageIcon,
+  Download,
 } from "lucide-react";
 
 import Container from "~/components/templates/Container";
 import { getStandings } from "~/services/standingServices";
 import type { Standing } from "~/types/api/standings";
+import { toPng } from "html-to-image";
 // import { Club } from "../types/api/clubs";
 
 export default function StandingPage() {
@@ -20,6 +23,75 @@ export default function StandingPage() {
   const [season, setSeason] = useState("2026/2027");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  const [exportSize, setExportSize] = useState("instagram");
+
+  const [customWidth, setCustomWidth] = useState(1080);
+  const [customHeight, setCustomHeight] = useState(1350);
+  const [exporting, setExporting] = useState(false);
+
+  const exportFormats = {
+    instagram: {
+      label: "Instagram Feed · 4:5",
+      width: 1080,
+      height: 1350,
+    },
+    square: {
+      label: "Instagram Square · 1:1",
+      width: 1080,
+      height: 1080,
+    },
+    story: {
+      label: "Story / Reels / TikTok · 9:16",
+      width: 1080,
+      height: 1920,
+    },
+    landscape: {
+      label: "Landscape · 16:9",
+      width: 1920,
+      height: 1080,
+    },
+    custom: {
+      label: "Ukuran khusus",
+      width: customWidth,
+      height: customHeight,
+    },
+  };
+
+  const selectedFormat =
+    exportFormats[exportSize as keyof typeof exportFormats];
+
+  const downloadStanding = async () => {
+    if (!exportRef.current || exporting || adjustedStandings.length === 0) {
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const dataUrl = await toPng(exportRef.current, {
+        width: selectedFormat.width,
+        height: selectedFormat.height,
+        pixelRatio: 1,
+        cacheBust: true,
+        backgroundColor: "#0b1120",
+      });
+
+      const link = document.createElement("a");
+      link.download = `klasemen-${season.replace("/", "-")}-${exportSize}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (error) {
+      console.error("Gagal membuat gambar klasemen:", error);
+      setError(
+        "Gagal membuat gambar. Periksa logo klub, URL gambar, dan coba lagi.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const loadStandings = async () => {
     try {
@@ -146,6 +218,307 @@ export default function StandingPage() {
             </span>
           </div>
         </section>
+
+        {/* DOWNLOAD STANDING */}
+        <section className="rounded-2xl border border-white/10 bg-[#111827] p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
+              <ImageIcon size={22} />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-white">Export Klasemen</h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                Unduh gambar klasemen musim {season} untuk media sosial.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                htmlFor="export-size"
+                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400"
+              >
+                Format gambar
+              </label>
+
+              <select
+                id="export-size"
+                value={exportSize}
+                onChange={(event) => setExportSize(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-sm text-white outline-none focus:border-amber-400"
+              >
+                {Object.entries(exportFormats).map(([key, format]) => (
+                  <option key={key} value={key}>
+                    {format.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                Resolusi gambar
+              </label>
+
+              <div className="rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-sm font-bold text-amber-300">
+                {selectedFormat.width} × {selectedFormat.height} px
+              </div>
+            </div>
+          </div>
+
+          {exportSize === "custom" && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-2 block text-xs text-zinc-400">
+                  Lebar (px)
+                </label>
+                <input
+                  type="number"
+                  min={320}
+                  max={4000}
+                  value={customWidth}
+                  onChange={(event) =>
+                    setCustomWidth(
+                      Math.max(
+                        320,
+                        Math.min(4000, Number(event.target.value) || 320),
+                      ),
+                    )
+                  }
+                  className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-white outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs text-zinc-400">
+                  Tinggi (px)
+                </label>
+                <input
+                  type="number"
+                  min={320}
+                  max={4000}
+                  value={customHeight}
+                  onChange={(event) =>
+                    setCustomHeight(
+                      Math.max(
+                        320,
+                        Math.min(4000, Number(event.target.value) || 320),
+                      ),
+                    )
+                  }
+                  className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-white outline-none focus:border-amber-400"
+                />
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={downloadStanding}
+            disabled={exporting || loading || adjustedStandings.length === 0}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3.5 text-sm font-bold text-[#111827] transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          >
+            <Download size={18} />
+            {exporting ? "Membuat Gambar..." : "Download Klasemen PNG"}
+          </button>
+
+          <p className="mt-3 text-xs leading-5 text-zinc-500">
+            File PNG akan dibuat sesuai resolusi yang dipilih. Gambar ini hanya
+            berisi desain klasemen, bukan seluruh halaman.
+          </p>
+        </section>
+
+        {/* DESAIN KHUSUS UNTUK GAMBAR EXPORT */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            left: "-20000px",
+            top: 0,
+            width: selectedFormat.width,
+            height: selectedFormat.height,
+            overflow: "hidden",
+            background: "#0b1120",
+            color: "#ffffff",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <div
+            ref={exportRef}
+            style={{
+              boxSizing: "border-box",
+              width: selectedFormat.width,
+              height: selectedFormat.height,
+              padding: Math.max(32, selectedFormat.width * 0.045),
+              background: "linear-gradient(145deg, #182438, #0b1120 65%)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ marginBottom: 24 }}>
+              <div
+                style={{
+                  color: "#fbbf24",
+                  fontSize: selectedFormat.width * 0.018,
+                  fontWeight: 800,
+                  letterSpacing: 4,
+                  marginBottom: 14,
+                }}
+              >
+                LEAGUE COMPETITION
+              </div>
+
+              <div
+                style={{
+                  fontSize: selectedFormat.width * 0.047,
+                  fontWeight: 900,
+                  lineHeight: 1.1,
+                }}
+              >
+                LEAGUE <span style={{ color: "#fbbf24" }}>STANDING</span>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 12,
+                  color: "#a1a1aa",
+                  fontSize: selectedFormat.width * 0.018,
+                }}
+              >
+                Klasemen Liga Indonesia · Musim {season}
+              </div>
+
+              <div
+                style={{
+                  marginTop: 20,
+                  height: 4,
+                  background: "#fbbf24",
+                  borderRadius: 4,
+                }}
+              />
+            </div>
+
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <table
+                style={{
+                  width: "100%",
+                  tableLayout: "fixed",
+                  borderCollapse: "collapse",
+                  fontSize: Math.max(
+                    11,
+                    Math.min(
+                      25,
+                      (selectedFormat.height * 0.57) /
+                        Math.max(adjustedStandings.length, 1) /
+                        1.8,
+                    ),
+                  ),
+                }}
+              >
+                <colgroup>
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "39%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "7%" }} />
+                </colgroup>
+
+                {/* header download */}
+                <thead>
+                  <tr style={{ background: "#fbbf24", color: "#111827" }}>
+                    {["POS", "KLUB", "M", "M", "S", "K", "GM", "SG", "PTS"].map(
+                      (heading, index) => (
+                        <th
+                          key={`${heading}-${index}`}
+                          style={{
+                            padding: "12px 4px",
+                            textAlign: index === 1 ? "left" : "center",
+                            fontWeight: 900,
+                          }}
+                        >
+                          {heading}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+
+                {/* body download */}
+                <tbody>
+                  {adjustedStandings.map((standing, index) => (
+                    <tr
+                      key={standing._id}
+                      style={{
+                        background: index % 2 === 0 ? "#172235" : "#101a2a",
+                        borderBottom: "1px solid #293548",
+                      }}
+                    >
+                      <td style={{ padding: "10px 3px", textAlign: "center" }}>
+                        <span
+                          style={{
+                            color: index === 0 ? "#fbbf24" : "#e4e4e7",
+                            fontWeight: 900,
+                          }}
+                        >
+                          {index + 1}
+                        </span>
+                      </td>
+
+                      <td
+                        style={{
+                          padding: "10px 5px",
+                          fontWeight: 700,
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {standing.club.name_club}
+                      </td>
+
+                      <td style={{ textAlign: "center" }}>{standing.match}</td>
+                      <td style={{ textAlign: "center" }}>{standing.win}</td>
+                      <td style={{ textAlign: "center" }}>{standing.draw}</td>
+                      <td style={{ textAlign: "center" }}>{standing.lose}</td>
+                      <td style={{ textAlign: "center" }}>
+                        {standing.goals_for}
+                      </td>
+                      <td style={{ textAlign: "center" }}>
+                        {standing.goal_difference}
+                      </td>
+
+                      <td
+                        style={{
+                          textAlign: "center",
+                          color: "#fbbf24",
+                          fontWeight: 900,
+                        }}
+                      >
+                        {standing.adjustedPoints}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              style={{
+                paddingTop: 18,
+                color: "#71717a",
+                fontSize: selectedFormat.width * 0.014,
+                textAlign: "center",
+              }}
+            >
+              OFFICIAL LEAGUE STANDINGS · {season}
+            </div>
+          </div>
+        </div>
 
         {/* LOADING */}
         {loading && (
