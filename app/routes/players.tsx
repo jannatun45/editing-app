@@ -58,6 +58,14 @@ function getPhotoUrl(photo?: string) {
   return `${API_BASE.replace(/\/api\/?$/, "")}/${photo.replace(/^\/+/, "")}`;
 }
 
+type PlayerCardData = Player & {
+  ovr?: number;
+  flagUrl?: string;
+  nationalCode?: string;
+  leagueLogo?: string;
+  clubLogo?: string;
+};
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [clubs, setClubs] = useState<Club[]>([]);
@@ -472,108 +480,281 @@ export default function PlayersPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {visiblePlayers.map((player) => (
-                <article
-                  key={player._id}
-                  className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#131419] transition duration-200 hover:-translate-y-1 hover:border-amber-400/30"
-                >
-                  <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[#24242a] via-[#17181d] to-[#101115]">
-                    <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-400/[0.07] blur-2xl" />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {visiblePlayers.map((player) => {
+                const playerName = player.name_player || "Unknown Player";
+                const lastName =
+                  playerName.trim().split(/\s+/).slice(-1)[0] || "PLAYER";
+                const position =
+                  positionLabels[player.position] ?? player.position;
 
-                    <div className="absolute left-4 top-4 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5">
-                      <span className="text-xs text-zinc-400">PLAYER</span>
-                      <p className="text-xl font-bold text-amber-400">
-                        {player.number ?? "—"}
-                      </p>
-                    </div>
+                return (
+                  <article
+                    key={player._id}
+                    className="group mx-auto w-full max-w-[320px] overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#10141d] shadow-[0_12px_35px_rgba(0,0,0,0.2)] transition-all duration-300 hover:-translate-y-1.5 hover:border-amber-200/40 hover:shadow-[0_20px_45px_rgba(0,0,0,0.35)]"
+                  >
+                    {/* Premium player artwork */}
+                    <div className="relative isolate h-[350px] overflow-hidden bg-gradient-to-br from-[#27364a] via-[#131e30] to-[#090e18]">
+                      {/* Ambient lighting */}
+                      <div className="pointer-events-none absolute -right-16 top-8 -z-10 h-56 w-56 rounded-full bg-sky-400/[0.12] blur-[65px]" />
+                      <div className="pointer-events-none absolute -bottom-10 -left-10 -z-10 h-48 w-48 rounded-full bg-amber-300/[0.08] blur-[60px]" />
 
-                    {player.photo ? (
-                      <img
-                        src={getPhotoUrl(player.photo)}
-                        alt={player.name_player}
-                        loading="lazy"
-                        className="relative z-10 h-full max-w-[70%] object-contain object-bottom transition duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border border-amber-400/20 bg-amber-400/10 text-3xl font-bold text-amber-400">
-                        {player.name_player
-                          .split(" ")
-                          .slice(0, 2)
-                          .map((part) => part[0])
-                          .join("")
-                          .toUpperCase()}
+                      {/* Geometric decoration */}
+                      <div className="pointer-events-none absolute right-[-35px] top-20 -z-10 h-44 w-44 rotate-45 border border-white/[0.08]" />
+                      <div className="pointer-events-none absolute right-[-15px] top-28 -z-10 h-36 w-36 rotate-45 border border-amber-200/10" />
+                      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-px bg-gradient-to-r from-transparent via-amber-200/60 to-transparent" />
+
+                      {/* Top information */}
+                      <div className="absolute left-5 top-5 z-20">
+                        <p className="text-[9px] font-bold tracking-[0.25em] text-slate-400">
+                          PLAYER PROFILE
+                        </p>
+
+                        <p className="mt-3 text-3xl font-black leading-none tracking-tight text-[#ead7a7]">
+                          {player.position}
+                        </p>
+
+                        <p className="mt-1 text-[11px] font-semibold tracking-wider text-slate-300">
+                          {position}
+                        </p>
+
+                        <div className="mt-3 h-[2px] w-9 rounded-full bg-gradient-to-r from-amber-200 to-transparent" />
                       </div>
-                    )}
 
-                    <span className="absolute bottom-3 right-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-zinc-300">
-                      {positionLabels[player.position] ?? player.position}
-                    </span>
-                  </div>
+                      {/* Decorative crest */}
+                      <div className="absolute right-5 top-5 z-20 flex h-11 w-9 flex-col items-center justify-center rounded-b-xl border border-amber-100/30 bg-slate-950/30 text-amber-100/90">
+                        <span className="text-xs font-black tracking-tight">
+                          FC
+                        </span>
+                        <span className="mt-1 h-px w-4 bg-amber-200/60" />
+                      </div>
 
-                  <div className="space-y-4 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h3 className="truncate font-semibold text-white transition group-hover:text-amber-300">
-                          {player.name_player}
+                      {/* Player photo */}
+                      <div className="absolute inset-x-0 bottom-0 top-12 z-10 flex items-end justify-center">
+                        {player.photo ? (
+                          <img
+                            src={getPhotoUrl(player.photo)}
+                            alt={playerName}
+                            loading="lazy"
+                            className="h-full w-full object-contain object-bottom drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] transition-transform duration-500 group-hover:scale-[1.04]"
+                            onError={(e) => {
+                              e.currentTarget.style.opacity = "0";
+                            }}
+                          />
+                        ) : (
+                          <div className="mb-20 flex h-32 w-32 items-center justify-center rounded-full border border-amber-200/20 bg-slate-800 text-4xl font-black text-amber-100">
+                            {playerName
+                              .split(/\s+/)
+                              .slice(0, 2)
+                              .map((part) => part[0] ?? "")
+                              .join("")
+                              .toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom image fade */}
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[52%] bg-gradient-to-t from-[#111927] via-[#111927]/65 to-transparent" />
+
+                      {/* Player name */}
+                      <div className="absolute inset-x-5 bottom-5 z-20">
+                        <p className="text-[9px] font-bold tracking-[0.25em] text-amber-200/90">
+                          THE PLAYER
+                        </p>
+
+                        <h3
+                          title={playerName}
+                          className="mt-1 truncate text-[clamp(25px,3vw,34px)] font-black leading-none tracking-[-0.045em] text-white drop-shadow-lg"
+                        >
+                          {lastName}
                         </h3>
-                        <p className="mt-1 truncate text-sm text-zinc-500">
-                          {getClubName(player.club)}
+
+                        <p className="mt-2 truncate text-xs font-medium tracking-wide text-slate-300">
+                          {playerName}
                         </p>
                       </div>
 
-                      <span
-                        className={`shrink-0 rounded-lg border px-2 py-1 text-xs ${
-                          positionStyles[player.position] ??
-                          "border-white/10 text-zinc-400"
-                        }`}
-                      >
-                        {player.position}
-                      </span>
+                      {/* Gold separator */}
+                      <div className="absolute inset-x-5 bottom-0 z-30 h-[2px] bg-gradient-to-r from-transparent via-amber-200/90 to-transparent" />
                     </div>
 
-                    <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-xl border border-white/[0.06] bg-black/20 py-3">
-                      <div className="text-center">
-                        <p className="text-lg font-bold">
-                          {getAge(player.date_of_birth) ?? "—"}
-                        </p>
-                        <p className="mt-1 text-[11px] text-zinc-500">Age</p>
+                    {/* Player details */}
+                    <div className="bg-gradient-to-b from-[#111927] to-[#10141d] p-5">
+                      {/* Club */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-bold tracking-[0.2em] text-slate-500">
+                            CURRENT CLUB
+                          </p>
+
+                          <p className="mt-1.5 truncate text-sm font-bold text-slate-100">
+                            {getClubName(player.club)}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold ${
+                            positionStyles[player.position] ??
+                            "border-white/10 bg-white/[0.04] text-slate-300"
+                          }`}
+                        >
+                          {player.position}
+                        </span>
                       </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-amber-400">
-                          {player.goals ?? 0}
-                        </p>
-                        <p className="mt-1 text-[11px] text-zinc-500">Goals</p>
+
+                      {/* Statistics */}
+                      <div className="mt-5 grid grid-cols-3 divide-x divide-white/[0.08] border-y border-white/[0.08] py-4">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="text-xl font-extrabold tabular-nums text-[#ead7a7]">
+                            {getAge(player.date_of_birth) ?? "—"}
+                          </span>
+                          <span className="text-[9px] font-bold tracking-[0.16em] text-slate-500">
+                            AGE
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="text-xl font-extrabold tabular-nums text-[#ead7a7]">
+                            {player.goals ?? 0}
+                          </span>
+                          <span className="text-[9px] font-bold tracking-[0.16em] text-slate-500">
+                            GOALS
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-1.5">
+                          <span className="text-xl font-extrabold tabular-nums text-[#ead7a7]">
+                            {player.assists ?? 0}
+                          </span>
+                          <span className="text-[9px] font-bold tracking-[0.16em] text-slate-500">
+                            ASSISTS
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <p className="text-lg font-bold">
-                          {player.assists ?? 0}
+
+                      {/* Footer */}
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <p className="min-w-0 truncate text-[11px] text-slate-400">
+                          {player.national || "Nationality unavailable"}
                         </p>
-                        <p className="mt-1 text-[11px] text-zinc-500">
-                          Assists
-                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPlayer(player)}
+                          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-amber-200/25 bg-amber-200/[0.05] px-3 py-2.5 text-[10px] font-bold tracking-wide text-amber-100 transition-all duration-200 hover:border-amber-200 hover:bg-amber-200 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200"
+                        >
+                          VIEW PROFILE
+                          <span aria-hidden="true">↗</span>
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-xs text-zinc-500">
-                        {player.national || "Nationality not available"}
-                      </p>
-
-                      <button
-                        onClick={() => setSelectedPlayer(player)}
-                        className="shrink-0 rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-semibold text-amber-400 transition hover:bg-amber-400 hover:text-black"
-                      >
-                        View details
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
+
+            // <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            //   {visiblePlayers.map((player) => (
+            //     <article
+            //       key={player._id}
+            //       className="group overflow-hidden rounded-2xl border border-white/[0.08] bg-[#131419] transition duration-200 hover:-translate-y-1 hover:border-amber-400/30"
+            //     >
+            //       <div className="relative flex h-44 items-center justify-center overflow-hidden bg-gradient-to-br from-[#24242a] via-[#17181d] to-[#101115]">
+            //         <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-amber-400/[0.07] blur-2xl" />
+
+            //         <div className="absolute left-4 top-4 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5">
+            //           <span className="text-xs text-zinc-400">PLAYER</span>
+            //           <p className="text-xl font-bold text-amber-400">
+            //             {player.number ?? "—"}
+            //           </p>
+            //         </div>
+
+            //         {player.photo ? (
+            //           <img
+            //             src={getPhotoUrl(player.photo)}
+            //             alt={player.name_player}
+            //             loading="lazy"
+            //             className="relative z-10 h-full max-w-[70%] object-contain object-bottom transition duration-300 group-hover:scale-105"
+            //             onError={(e) => {
+            //               e.currentTarget.style.display = "none";
+            //             }}
+            //           />
+            //         ) : (
+            //           <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border border-amber-400/20 bg-amber-400/10 text-3xl font-bold text-amber-400">
+            //             {player.name_player
+            //               .split(" ")
+            //               .slice(0, 2)
+            //               .map((part) => part[0])
+            //               .join("")
+            //               .toUpperCase()}
+            //           </div>
+            //         )}
+
+            //         <span className="absolute bottom-3 right-3 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-zinc-300">
+            //           {positionLabels[player.position] ?? player.position}
+            //         </span>
+            //       </div>
+
+            //       <div className="space-y-4 p-4">
+            //         <div className="flex items-start justify-between gap-3">
+            //           <div className="min-w-0">
+            //             <h3 className="truncate font-semibold text-white transition group-hover:text-amber-300">
+            //               {player.name_player}
+            //             </h3>
+            //             <p className="mt-1 truncate text-sm text-zinc-500">
+            //               {getClubName(player.club)}
+            //             </p>
+            //           </div>
+
+            //           <span
+            //             className={`shrink-0 rounded-lg border px-2 py-1 text-xs ${
+            //               positionStyles[player.position] ??
+            //               "border-white/10 text-zinc-400"
+            //             }`}
+            //           >
+            //             {player.position}
+            //           </span>
+            //         </div>
+
+            //         <div className="grid grid-cols-3 divide-x divide-white/[0.08] rounded-xl border border-white/[0.06] bg-black/20 py-3">
+            //           <div className="text-center">
+            //             <p className="text-lg font-bold">
+            //               {getAge(player.date_of_birth) ?? "—"}
+            //             </p>
+            //             <p className="mt-1 text-[11px] text-zinc-500">Age</p>
+            //           </div>
+            //           <div className="text-center">
+            //             <p className="text-lg font-bold text-amber-400">
+            //               {player.goals ?? 0}
+            //             </p>
+            //             <p className="mt-1 text-[11px] text-zinc-500">Goals</p>
+            //           </div>
+            //           <div className="text-center">
+            //             <p className="text-lg font-bold">
+            //               {player.assists ?? 0}
+            //             </p>
+            //             <p className="mt-1 text-[11px] text-zinc-500">
+            //               Assists
+            //             </p>
+            //           </div>
+            //         </div>
+
+            //         <div className="flex items-center justify-between gap-2">
+            //           <p className="truncate text-xs text-zinc-500">
+            //             {player.national || "Nationality not available"}
+            //           </p>
+
+            //           <button
+            //             onClick={() => setSelectedPlayer(player)}
+            //             className="shrink-0 rounded-lg border border-amber-400/20 px-3 py-2 text-xs font-semibold text-amber-400 transition hover:bg-amber-400 hover:text-black"
+            //           >
+            //             View details
+            //           </button>
+            //         </div>
+            //       </div>
+            //     </article>
+            //   ))}
+            // </div>
           )}
 
           {/* Pagination */}

@@ -42,4 +42,5 @@ export type Match = {
   createdAt: string;
   updatedAt: string;
   stadium?: string;
+  poster?: string | null;
 };

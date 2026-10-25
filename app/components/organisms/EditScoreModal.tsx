@@ -17,6 +17,8 @@ type EditScoreModalProps = {
     homeScore: number,
     awayScore: number,
     goals: MatchGoalInput[],
+    posterFile?: File | null,
+    shouldUpdateScore?: boolean,
   ) => void;
 };
 
@@ -29,12 +31,9 @@ export default function EditScoreModal({
   const [matchday, setMatchday] = useState(match.matchday.toString());
   const [matchDate, setMatchDate] = useState(() => {
     if (!match.match_date) return "";
-
     const date = new Date(match.match_date);
-
     // Sesuaikan dengan zona waktu lokal browser
     const timezoneOffset = date.getTimezoneOffset() * 60_000;
-
     return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
   });
   const [homeScore, setHomeScore] = useState(
@@ -48,11 +47,18 @@ export default function EditScoreModal({
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [goals, setGoals] = useState<MatchGoalInput[]>([]);
   const [error, setError] = useState("");
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterPreview, setPosterPreview] = useState<string>(
+    match.poster ?? "",
+  );
+
+  // console.log("posterPreview: ", posterPreview);
+  // console.log(import.meta.env.VITE_API_URL);
+  // console.log(posterFile);
 
   // =========================
   // LOAD PLAYERS
   // =========================
-
   useEffect(() => {
     const loadPlayers = async () => {
       try {
@@ -81,7 +87,6 @@ export default function EditScoreModal({
   // =========================
   // LOAD EXISTING GOALS
   // =========================
-
   useEffect(() => {
     if (!match.goals) {
       setGoals([]);
@@ -202,61 +207,106 @@ export default function EditScoreModal({
   // =========================
   // HANDLE SUBMIT
   // =========================
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError("");
 
     const day = Number(matchday);
     const home = Number(homeScore);
     const away = Number(awayScore);
 
-    // Validasi matchday
-    if (!matchday || day < 1) {
-      setError("Matchday harus diisi.");
+    // 1. Validasi jadwal
+    if (!Number.isInteger(day) || day < 1) {
+      setError("Matchday minimal 1");
       return;
     }
 
-    // Validasi tanggal dan waktu
-    if (!matchDate) {
-      setError("Tanggal dan waktu pertandingan harus diisi.");
+    if (!matchDate || Number.isNaN(new Date(matchDate).getTime())) {
+      setError("Tanggal dan waktu pertandingan wajib diisi");
       return;
     }
 
-    // Validasi score
-    if (home < 0 || away < 0) {
-      setError("Score tidak boleh negatif.");
-      return;
-    }
+    // 2. Bandingkan skor sekarang dengan skor sebelumnya
+    const originalHomeScore = Number(match.home_score ?? 0);
+    const originalAwayScore = Number(match.away_score ?? 0);
 
-    // Jumlah goal harus sama dengan total score
-    if (goals.length !== home + away) {
-      setError(
-        `Jumlah pencetak gol harus ${home + away} karena skor ${home}-${away}.`,
-      );
-      return;
-    }
+    const scoreChanged =
+      home !== originalHomeScore || away !== originalAwayScore;
 
-    // Validasi setiap goal
-    for (const goal of goals) {
-      if (!goal.club) {
-        setError("Club pencetak gol belum dipilih.");
+    // 3. Normalisasi goal lama dari database
+    const originalGoals: MatchGoalInput[] = (match.goals ?? []).map((goal) => ({
+      club: typeof goal.club === "object" ? goal.club._id : goal.club,
+
+      scorer:
+        typeof goal.player === "object"
+          ? goal.player._id
+          : typeof goal.scorer === "object"
+            ? goal.scorer._id
+            : (goal.player ?? goal.scorer ?? ""),
+
+      minute: String(goal.minute),
+      assist:
+        typeof goal.assist === "object"
+          ? (goal.assist?._id ?? "")
+          : (goal.assist ?? ""),
+
+      is_own_goal: goal.is_own_goal ?? false,
+    }));
+
+    // 4. Normalisasi goal agar perbandingan konsisten
+    const normalizeGoals = (items: MatchGoalInput[]) =>
+      items
+        .map((goal) => ({
+          club: goal.club,
+          scorer: goal.scorer,
+          minute: String(goal.minute),
+          assist: goal.assist || "",
+          is_own_goal: goal.is_own_goal ?? false,
+        }))
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+
+    const goalsChanged =
+      JSON.stringify(normalizeGoals(goals)) !==
+      JSON.stringify(normalizeGoals(originalGoals));
+
+    const shouldUpdateScore = scoreChanged || goalsChanged;
+
+    // 5. Validasi hasil hanya jika skor atau goal berubah
+    if (shouldUpdateScore) {
+      if (
+        !Number.isInteger(home) ||
+        !Number.isInteger(away) ||
+        home < 0 ||
+        away < 0
+      ) {
+        setError("Skor harus berupa bilangan bulat dan tidak boleh negatif");
         return;
       }
 
-      if (!goal.scorer) {
-        setError("Pencetak gol belum dipilih.");
+      if (goals.length !== home + away) {
+        setError("Jumlah goal event harus sesuai dengan total skor");
         return;
       }
 
-      if (!goal.minute) {
-        setError("Menit gol belum diisi.");
-        return;
+      for (const goal of goals) {
+        if (!goal.club || !goal.scorer || !String(goal.minute).trim()) {
+          setError("Lengkapi club, pencetak gol, dan menit setiap goal");
+          return;
+        }
+
+        const minute = Number(goal.minute);
+
+        if (!Number.isInteger(minute) || minute < 1 || minute > 120) {
+          setError("Menit gol harus berupa bilangan bulat antara 1–120");
+          return;
+        }
       }
     }
 
-    onSave(day, matchDate, home, away, goals);
-  };
+    // 6. Simpan jadwal dan kirim penanda perubahan skor
+    onSave(day, matchDate, home, away, goals, posterFile, shouldUpdateScore);
+  }
 
   // =========================
   // GET PLAYERS
@@ -283,10 +333,7 @@ export default function EditScoreModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-zinc-900 p-6">
-        {/* =========================
-            HEADER
-        ========================= */}
-
+        {/* ========================= HEADER ========================= */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-white">Edit Pertandingan</h2>
@@ -306,12 +353,8 @@ export default function EditScoreModal({
             ✕
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* =========================
-              SCHEDULE
-          ========================= */}
-
+          {/* ========================= SCHEDULE ========================= */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <h3 className="mb-4 font-semibold text-white">
               Jadwal Pertandingan
@@ -350,11 +393,7 @@ export default function EditScoreModal({
               </div>
             </div>
           </div>
-
-          {/* =========================
-              SCORE
-          ========================= */}
-
+          {/* ========================= SCORE ========================= */}
           <div>
             <h3 className="mb-4 font-semibold text-white">Score</h3>
 
@@ -392,11 +431,7 @@ export default function EditScoreModal({
               </div>
             </div>
           </div>
-
-          {/* =========================
-              GOALS
-          ========================= */}
-
+          {/* ========================= GOALS ========================= */}
           <div>
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -614,17 +649,67 @@ export default function EditScoreModal({
               })}
             </div>
           </div>
+          {/* ========================= POSTER PERTANDINGAN ========================= */}
+          <div className="space-y-3">
+            <label
+              htmlFor="match-poster"
+              className="block text-sm font-medium text-white"
+            >
+              Poster Pertandingan
+            </label>
 
+            {/* Preview poster lama atau poster baru */}
+            {posterPreview && (
+              <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                <img
+                  src={
+                    posterFile
+                      ? URL.createObjectURL(posterFile)
+                      : posterPreview.startsWith("http")
+                        ? posterPreview
+                        : `http://localhost:3000${posterPreview.startsWith("/") ? posterPreview : `/images/matches/${posterPreview}`}`
+                  }
+                  alt="Poster pertandingan"
+                  className="max-h-72 w-full rounded-lg object-contain"
+                />
+                <p className="mt-2 text-xs text-zinc-500">
+                  {posterFile ? "Poster baru yang dipilih" : "Poster saat ini"}
+                </p>
+              </div>
+            )}
+
+            {!posterPreview && !posterFile && (
+              <div className="rounded-xl border border-dashed border-zinc-700 p-6 text-center">
+                <p className="text-sm text-zinc-500">
+                  Belum ada poster pertandingan.
+                </p>
+              </div>
+            )}
+
+            <input
+              id="match-poster"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setPosterFile(file);
+              }}
+              className="block w-full rounded-lg border border-white/10 bg-[#191d22] p-3 text-sm text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-[#b9a078] file:px-3 file:py-2 file:font-medium file:text-black"
+            />
+
+            {posterFile && (
+              <p className="text-xs text-zinc-400">
+                File dipilih: {posterFile.name}
+              </p>
+            )}
+          </div>
           {/* ERROR */}
-
           {error && (
             <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
               {error}
             </div>
           )}
-
           {/* BUTTON */}
-
           <div className="flex justify-end gap-3">
             <button
               type="button"

@@ -28,7 +28,6 @@ export async function resetMatchResult(id: string) {
   return result.data;
 }
 // Update jadwal pertandingan
-
 export async function updateMatch(
   id: string,
   matchday: number,
@@ -40,7 +39,6 @@ export async function updateMatch(
   formData.append("matchday", String(matchday));
   formData.append("match_date", matchDate);
 
-  // Tambahkan poster jika pengguna memilih gambar
   if (posterFile) {
     formData.append("poster", posterFile);
   }
@@ -48,14 +46,16 @@ export async function updateMatch(
   const response = await fetch(`${API_URL}/match/${id}`, {
     method: "PUT",
     body: formData,
+    // Jangan tambahkan Content-Type: multipart/form-data secara manual.
+    // Browser akan mengatur boundary secara otomatis.
   });
 
+  const result = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Gagal memperbarui jadwal");
+    throw new Error(result?.message || "Gagal memperbarui jadwal");
   }
 
-  const result = await response.json();
   return result.data;
 }
 

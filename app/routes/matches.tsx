@@ -13,8 +13,7 @@ import {
   updateMatchScore,
 } from "~/services/matchServices";
 import type { Club } from "~/types/api/clubs";
-import type { FixtureGoalInput } from "~/types/api/fixtures";
-import type { Match } from "~/types/api/matches";
+import type { Match, MatchGoalInput } from "~/types/api/matches";
 
 export default function Matches() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -107,45 +106,38 @@ export default function Matches() {
     matchDate: string,
     homeScore: number,
     awayScore: number,
-    goals: FixtureGoalInput[],
+    goals: MatchGoalInput[],
+    posterFile?: File | null,
+    shouldUpdateScore = false,
   ) => {
     // Pastikan ada fixture yang sedang dipilih.
     if (!selectedMatch) {
       return;
     }
-    // if (!id) {
-    //   setError("ID club tidak ditemukan");
-    //   return;
-    // }
-
     try {
       setLoading(true);
       setError("");
 
-      console.log("1. Mulai menyimpan skor");
+      // 1. simpan skor dan goal event
+      console.log("sebelum function update score di jalankan");
+      console.log("shouldUpdateScore: ", shouldUpdateScore);
+      if (shouldUpdateScore) {
+        console.log("update score ini di jalankan ");
+        console.log("shouldUpdateScore: ", shouldUpdateScore);
 
-      // UPDATE SCORE PERTANDINGAN + GOAL PERTANDINGAN
-      // Simpan jadwal, skor, dan seluruh Goal Event dalam satu request.
-      await updateMatchScore(selectedMatch._id, {
-        matchday,
-        match_date: matchDate,
-        home_score: homeScore,
-        away_score: awayScore,
-        goals,
-      });
+        await updateMatchScore(selectedMatch._id, {
+          matchday,
+          match_date: matchDate,
+          home_score: homeScore,
+          away_score: awayScore,
+          goals,
+        });
+      }
+      console.log("console sesudah function update score");
+      // 2. update jadwal pertandingan
+      await updateMatch(selectedMatch._id, matchday, matchDate, posterFile);
 
-      console.log("2. Skor dan gol berhasil disimpan");
-
-      // update fixture
-      await updateMatch(selectedMatch._id, matchday, matchDate);
-
-      console.log("Selected match:", selectedMatch._id);
-      console.log("Goals yang dikirim:", goals);
-      console.log("Jumlah goals:", goals.length);
-
-      console.log("3. Jadwal berhasil diperbarui");
-
-      // Tutup modal
+      // 3. tutup modal dan muat ulang data
       setSelectedMatch(null);
 
       // reload matches / data dimuat ulang
@@ -229,9 +221,9 @@ export default function Matches() {
     <div className="space-y-6 mt-6 mb-28">
       {/* ========================= HEADER ========================= */}
 
-      <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#121519] p-5 sm:p-7">
+      <div className="relative overflow-hidden rounded-2xl border border-white/8 bg-[#121519] p-5 sm:p-7">
         {/* Decorative accent */}
-        <div className="pointer-events-none absolute right-0 top-0 h-40 w-64 bg-gradient-to-bl from-[#b9a078]/[0.08] to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 h-40 w-64 bg-linear-to-bl from-[#b9a078]/8 to-transparent" />
 
         <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           {/* Header */}
@@ -265,7 +257,7 @@ export default function Matches() {
               <select
                 value={season}
                 onChange={(event) => setSeason(event.target.value)}
-                className="min-h-11 w-full cursor-pointer appearance-none rounded-lg border border-white/[0.10] bg-[#191d22] px-4 text-sm font-medium text-[#e5e5e5] outline-none transition hover:border-[#b9a078]/40 focus:border-[#b9a078] sm:w-36"
+                className="min-h-11 w-full cursor-pointer appearance-none rounded-lg border border-white/10 bg-[#191d22] px-4 text-sm font-medium text-[#e5e5e5] outline-none transition hover:border-[#b9a078]/40 focus:border-[#b9a078] sm:w-36"
               >
                 <option value="2026/2027">2026/2027</option>
                 <option value="2027/2028">2027/2028</option>
@@ -277,7 +269,7 @@ export default function Matches() {
               type="button"
               onClick={handleOpenCreateModal}
               disabled={loading || creatingMatch}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/[0.12] bg-white/[0.03] px-4 text-sm font-medium text-[#e5e5e5] transition hover:border-[#b9a078]/50 hover:bg-[#b9a078]/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/12 bg-white/3 px-4 text-sm font-medium text-[#e5e5e5] transition hover:border-[#b9a078]/50 hover:bg-[#b9a078]/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="text-lg leading-none text-[#b9a078]">+</span>
               Create Match

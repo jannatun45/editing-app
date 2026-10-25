@@ -166,6 +166,10 @@ export default function MatchPosterPage() {
   const homeLogo = getAssetUrl(match.home_club?.logo);
   const awayLogo = getAssetUrl(match.away_club?.logo);
   const matchDate = match.match_date ? new Date(match.match_date) : null;
+  const matchPoster = match.poster
+    ? `${API_BASE}/images/matches/${match.poster}`
+    : "";
+
   const dateLabel = matchDate
     ? matchDate
         .toLocaleDateString("id-ID", {
@@ -226,6 +230,7 @@ export default function MatchPosterPage() {
                 { color: "#38bdf8", label: "Biru" },
                 { color: "#22c55e", label: "Hijau" },
                 { color: "#a78bfa", label: "Ungu" },
+                { color: "#203da0", label: "Ungu" },
               ].map(({ color, label }) => (
                 <button
                   key={color}
@@ -291,17 +296,17 @@ export default function MatchPosterPage() {
                 style={{
                   aspectRatio: `${selectedSize.width}/${selectedSize.height}`,
                   backgroundImage: `
-      radial-gradient(
-        ellipse at 0% 15%,
-        ${accent}55 0%,
-        transparent 42%
-      ),
-      linear-gradient(
-        rgba(0, 0, 0, 0.35),
-        rgba(0, 0, 0, 0.75)
-      ),
-      url("/poster.png")
-    `,
+    radial-gradient(
+      ellipse at 0% 15%,
+      ${accent}55 0%,
+      transparent 42%
+    ),
+    linear-gradient(
+      rgba(0, 0, 0, 0.35),
+      rgba(0, 0, 0, 0.75)
+    )
+    ${matchPoster ? `, url("${matchPoster}")` : ""}
+  `,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
@@ -313,8 +318,8 @@ export default function MatchPosterPage() {
                   style={{ backgroundColor: accent }}
                 />
                 {/* garis diagonal pada background */}
-                <div className="pointer-events-none absolute left-[-25%] top-[12%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
-                <div className="pointer-events-none absolute right-[-25%] top-[20%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
+                {/* <div className="pointer-events-none absolute left-[-25%] top-[12%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
+                <div className="pointer-events-none absolute right-[-25%] top-[20%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" /> */}
 
                 {/* header */}
                 <header className="relative z-10 flex items-start justify-between gap-3 border-b border-white/5 pb-3 mt-4 mx-4">
@@ -396,6 +401,7 @@ export default function MatchPosterPage() {
                         </span>
                         <p className="max-w-full wrap-break-words text-[clamp(7px,8px,11px)] font-bold uppercase">
                           {match.home_club?.stadium || "Stadion belum tersedia"}
+                          {/* Kapten I Wayan Dipta Gianyar */}
                         </p>
                       </div>
                     </div>
