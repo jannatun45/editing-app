@@ -1,15 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react";
 // import services
-import { resetMatchResult } from "~/services/matchServices";
+import { deleteMatch } from "~/services/matchServices";
 import { getPlayersByClub } from "~/services/playerServices";
 // import types
 import type { Match, MatchGoalInput } from "~/types/api/matches";
 import type { Player } from "~/types/api/player";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 type EditScoreModalProps = {
   match: Match;
   onClose: () => void;
   onReset: () => Promise<void>;
+  onDelete: () => Promise<void>;
 
   onSave: (
     matchday: number,
@@ -17,21 +20,27 @@ type EditScoreModalProps = {
     homeScore: number,
     awayScore: number,
     goals: MatchGoalInput[],
+    posterFile?: File | null,
+    shouldUpdateScore?: boolean,
   ) => void;
 };
 
+// apakah sama
 export default function EditScoreModal({
   match,
   onClose,
   onSave,
+  onDelete,
   onReset,
 }: EditScoreModalProps) {
   const [matchday, setMatchday] = useState(match.matchday.toString());
-  const [matchDate, setMatchDate] = useState(
-    match.match_date
-      ? new Date(match.match_date).toISOString().slice(0, 16)
-      : "",
-  );
+  const [matchDate, setMatchDate] = useState(() => {
+    if (!match.match_date) return "";
+    const date = new Date(match.match_date);
+    // Sesuaikan dengan zona waktu lokal browser
+    const timezoneOffset = date.getTimezoneOffset() * 60_000;
+    return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+  });
   const [homeScore, setHomeScore] = useState(
     match.home_score?.toString() ?? "0",
   );
@@ -43,13 +52,11 @@ export default function EditScoreModal({
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [goals, setGoals] = useState<MatchGoalInput[]>([]);
   const [error, setError] = useState("");
-  console.log("match =>", match);
-  console.log("goals =>", goals);
-
-  // =========================
-  // LOAD PLAYERS
-  // =========================
-
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterPreview, setPosterPreview] = useState<string>(
+    match.poster ?? "",
+  );
+  // ========================= LOAD PLAYERS =========================
   useEffect(() => {
     const loadPlayers = async () => {
       try {
@@ -74,11 +81,7 @@ export default function EditScoreModal({
 
     loadPlayers();
   }, [match.home_club._id, match.away_club._id]);
-
-  // =========================
-  // LOAD EXISTING GOALS
-  // =========================
-
+  // ========================= LOAD EXISTING GOALS =========================
   useEffect(() => {
     if (!match.goals) {
       setGoals([]);
@@ -95,67 +98,47 @@ export default function EditScoreModal({
             ? goal.scorer._id
             : (goal.player ?? goal.scorer ?? ""),
 
+      player:
+        typeof goal.player === "object"
+          ? goal.player._id
+          : typeof goal.scorer === "object"
+            ? goal.scorer._id
+            : (goal.player ?? goal.scorer ?? ""),
+
       minute: String(goal.minute),
 
       assist:
         typeof goal.assist === "object"
           ? (goal.assist?._id ?? "")
           : (goal.assist ?? ""),
+      is_own_goal: goal.is_own_goal ?? false,
+      is_penalty: goal.is_penalty ?? false,
     }));
 
     setGoals(existingGoals);
   }, [match.goals]);
-
-  // =========================
-  // ADD GOAL
-  // =========================
-
+  // ========================= HANDLE ADD GOAL =========================
   const handleAddGoal = () => {
     setGoals((currentGoals) => [
-      ...currentGoals,
       {
         club: match.home_club._id,
         scorer: "",
+        player: "",
         minute: "",
         assist: "",
+        is_own_goal: false,
+        is_penalty: false,
       },
+      ...currentGoals,
     ]);
   };
-
-  // =========================
-  // REMOVE GOAL
-  // =========================
-
+  // ========================= REMOVE GOAL =========================
   const handleRemoveGoal = (index: number) => {
     setGoals((currentGoals) =>
       currentGoals.filter((_, goalIndex) => goalIndex !== index),
     );
   };
-
-  // =========================
-  //  HANDLE RESET RESULT
-  // =========================
-  const handleResetResult = async () => {
-    try {
-      setError("");
-
-      await resetMatchResult(match._id);
-
-      await onReset();
-
-      onClose();
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Gagal mereset hasil pertandingan",
-      );
-    }
-  };
-
-  // =========================
-  // UPDATE GOAL
-  // =========================
+  // ========================= UPDATE GOAL =========================
   const handleGoalChange = (
     index: number,
     field: keyof MatchGoalInput,
@@ -174,6 +157,7 @@ export default function EditScoreModal({
             ...goal,
             club: value,
             scorer: "",
+            player: "",
             assist: "",
           };
         }
@@ -184,6 +168,7 @@ export default function EditScoreModal({
           return {
             ...goal,
             scorer: value,
+            player: value,
             assist: "",
           };
         }
@@ -191,73 +176,148 @@ export default function EditScoreModal({
         return {
           ...goal,
           [field]: value,
+          ...(field === "scorer" ? { player: value } : {}),
         };
       }),
     );
   };
-
-  // =========================
-  // HANDLE SUBMIT
-  // =========================
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  // ========================= HANDLE SUBMIT =========================
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setError("");
+    console.log("submit pada page edit score modal");
 
     const day = Number(matchday);
     const home = Number(homeScore);
     const away = Number(awayScore);
 
-    // Validasi matchday
-    if (!matchday || day < 1) {
-      setError("Matchday harus diisi.");
+    // 1. Validasi jadwal
+    if (!Number.isInteger(day) || day < 1) {
+      setError("Matchday minimal 1");
       return;
     }
 
-    // Validasi tanggal dan waktu
-    if (!matchDate) {
-      setError("Tanggal dan waktu pertandingan harus diisi.");
+    if (!matchDate || Number.isNaN(new Date(matchDate).getTime())) {
+      setError("Tanggal dan waktu pertandingan wajib diisi");
       return;
     }
 
-    // Validasi score
-    if (home < 0 || away < 0) {
-      setError("Score tidak boleh negatif.");
-      return;
-    }
+    // 2. Bandingkan skor sekarang dengan skor sebelumnya
+    const originalHomeScore = Number(match.home_score ?? 0);
+    const originalAwayScore = Number(match.away_score ?? 0);
 
-    // Jumlah goal harus sama dengan total score
-    if (goals.length !== home + away) {
-      setError(
-        `Jumlah pencetak gol harus ${home + away} karena skor ${home}-${away}.`,
-      );
-      return;
-    }
+    const scoreChanged =
+      home !== originalHomeScore || away !== originalAwayScore;
 
-    // Validasi setiap goal
-    for (const goal of goals) {
-      if (!goal.club) {
-        setError("Club pencetak gol belum dipilih.");
+    // 3. Normalisasi goal lama dari database
+    const originalGoals: MatchGoalInput[] = (match.goals ?? []).map((goal) => ({
+      club: typeof goal.club === "object" ? goal.club._id : goal.club,
+
+      scorer:
+        typeof goal.player === "object"
+          ? goal.player._id
+          : typeof goal.scorer === "object"
+            ? goal.scorer._id
+            : (goal.player ?? goal.scorer ?? ""),
+
+      player:
+        typeof goal.player === "object"
+          ? goal.player._id
+          : typeof goal.scorer === "object"
+            ? goal.scorer._id
+            : (goal.player ?? goal.scorer ?? ""),
+
+      minute: String(goal.minute),
+      assist:
+        typeof goal.assist === "object"
+          ? (goal.assist?._id ?? "")
+          : (goal.assist ?? ""),
+
+      is_own_goal: goal.is_own_goal ?? false,
+      is_penalty: goal.is_penalty ?? false,
+    }));
+
+    // 4. Normalisasi goal agar perbandingan konsisten
+    const normalizeGoals = (items: MatchGoalInput[]) =>
+      items
+        .map((goal) => ({
+          club: goal.club,
+          scorer: goal.scorer,
+          minute: String(goal.minute),
+          assist: goal.assist || "",
+          is_own_goal: goal.is_own_goal ?? false,
+        }))
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+
+    const goalsChanged =
+      JSON.stringify(normalizeGoals(goals)) !==
+      JSON.stringify(normalizeGoals(originalGoals));
+
+    const shouldUpdateScore = scoreChanged || goalsChanged;
+
+    // 5. Validasi hasil hanya jika skor atau goal berubah
+    if (shouldUpdateScore) {
+      if (
+        !Number.isInteger(home) ||
+        !Number.isInteger(away) ||
+        home < 0 ||
+        away < 0
+      ) {
+        setError("Skor harus berupa bilangan bulat dan tidak boleh negatif");
         return;
       }
 
-      if (!goal.scorer) {
-        setError("Pencetak gol belum dipilih.");
+      if (goals.length !== home + away) {
+        setError("Jumlah goal event harus sesuai dengan total skor");
         return;
       }
 
-      if (!goal.minute) {
-        setError("Menit gol belum diisi.");
-        return;
+      for (const goal of goals) {
+        if (!goal.club || !goal.scorer || !String(goal.minute).trim()) {
+          setError("Lengkapi club, pencetak gol, dan menit setiap goal");
+          return;
+        }
+
+        const minute = String(goal.minute).trim();
+
+        // Format yang diperbolehkan: 1, 45, 90, 45+1, 90+3
+        const minuteRegex = /^(\d{1,3})(?:\+(\d{1,2}))?$/;
+        const matchMinute = minute.match(minuteRegex);
+
+        if (!matchMinute) {
+          setError("Format menit tidak valid. Contoh: 23, 45+1, atau 90+3");
+          return;
+        }
+
+        const baseMinute = Number(matchMinute[1]);
+
+        if (baseMinute < 1 || baseMinute > 120) {
+          setError("Menit gol harus berada antara 1–120");
+          return;
+        }
+
+        if (matchMinute[2] !== undefined && Number(matchMinute[2]) < 1) {
+          setError("Tambahan waktu harus minimal 1 menit");
+          return;
+        }
       }
     }
+    console.log("handle save di page matches");
+    console.log(
+      "data selected: ",
+      day,
+      matchDate,
+      home,
+      away,
+      goals,
+      posterFile,
+      shouldUpdateScore,
+    );
 
-    onSave(day, matchDate, home, away, goals);
-  };
-
-  // =========================
-  // GET PLAYERS
-  // =========================
+    // 6. Simpan jadwal dan kirim penanda perubahan skor
+    onSave(day, matchDate, home, away, goals, posterFile, shouldUpdateScore);
+  }
+  // ========================= GET PLAYERS =========================
   const getPlayers = (clubId: string) => {
     if (clubId === match.home_club._id) {
       return homePlayers;
@@ -265,10 +325,7 @@ export default function EditScoreModal({
 
     return awayPlayers;
   };
-
-  // =========================
-  // GET PLAYER NAME
-  // =========================
+  // ========================= GET PLAYER NAME =========================
   const getPlayerName = (playerId: string) => {
     const player = [...homePlayers, ...awayPlayers].find(
       (player) => player._id === playerId,
@@ -280,10 +337,7 @@ export default function EditScoreModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-zinc-900 p-6">
-        {/* =========================
-            HEADER
-        ========================= */}
-
+        {/* ========================= HEADER ========================= */}
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-white">Edit Pertandingan</h2>
@@ -303,12 +357,8 @@ export default function EditScoreModal({
             ✕
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* =========================
-              SCHEDULE
-          ========================= */}
-
+          {/* ========================= SCHEDULE ========================= */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
             <h3 className="mb-4 font-semibold text-white">
               Jadwal Pertandingan
@@ -332,7 +382,6 @@ export default function EditScoreModal({
               </div>
 
               {/* Date + Time */}
-
               <div>
                 <label className="mb-2 block text-sm text-zinc-400">
                   Tanggal & Waktu
@@ -347,11 +396,7 @@ export default function EditScoreModal({
               </div>
             </div>
           </div>
-
-          {/* =========================
-              SCORE
-          ========================= */}
-
+          {/* ========================= SCORE ========================= */}
           <div>
             <h3 className="mb-4 font-semibold text-white">Score</h3>
 
@@ -389,11 +434,7 @@ export default function EditScoreModal({
               </div>
             </div>
           </div>
-
-          {/* =========================
-              GOALS
-          ========================= */}
-
+          {/* ========================= GOALS ========================= */}
           <div>
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -427,7 +468,13 @@ export default function EditScoreModal({
 
             <div className="space-y-4">
               {goals.map((goal, index) => {
-                const players = getPlayers(goal.club);
+                const players = getPlayers(
+                  goal.is_own_goal
+                    ? goal.club === match.home_club._id
+                      ? match.away_club._id
+                      : match.home_club._id
+                    : goal.club,
+                );
 
                 return (
                   <div
@@ -446,9 +493,8 @@ export default function EditScoreModal({
                       </button>
                     </div>
 
+                    {/* Club */}
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Club */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Club
@@ -472,17 +518,14 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Minute */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Minute
                         </label>
 
                         <input
-                          type="number"
-                          min="1"
-                          max="120"
-                          value={goal.minute}
+                          type="text"
+                          value={String(goal.minute ?? "")}
                           onChange={(event) =>
                             handleGoalChange(
                               index,
@@ -495,11 +538,10 @@ export default function EditScoreModal({
                         />
                       </div>
 
-                      {/* Scorer */}
-
+                      {/* Player pencetak goal */}
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
-                          Scorer
+                          player
                         </label>
 
                         <select
@@ -524,7 +566,6 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Assist */}
-
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Assist
@@ -552,19 +593,76 @@ export default function EditScoreModal({
                             ))}
                         </select>
                       </div>
+
+                      {/* is_penalty */}
+                      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                        <input
+                          type="checkbox"
+                          checked={goal.is_penalty ?? false}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+
+                            setGoals((currentGoals) =>
+                              currentGoals.map((item, goalIndex) =>
+                                goalIndex === index
+                                  ? { ...item, is_penalty: checked }
+                                  : item,
+                              ),
+                            );
+                          }}
+                        />
+                        is_penalty
+                      </label>
+                      {/* is own goal */}
+                      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-3">
+                        <input
+                          type="checkbox"
+                          checked={goal.is_own_goal}
+                          onChange={(event) => {
+                            const checked = event.target.checked;
+
+                            setGoals((currentGoals) =>
+                              currentGoals.map((item, goalIndex) =>
+                                goalIndex === index
+                                  ? {
+                                      ...item,
+                                      is_own_goal: checked,
+                                      scorer: "",
+                                      player: "",
+                                      assist: "",
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          className="h-4 w-4 accent-white"
+                        />
+
+                        <div>
+                          <p className="text-sm font-medium text-white">
+                            Gol Bunuh Diri
+                          </p>
+                          <p className="text-xs text-zinc-500">
+                            Pemain mencetak gol ke gawang timnya sendiri
+                          </p>
+                        </div>
+                      </label>
                     </div>
 
                     {/* Preview */}
-
                     {goal.scorer && (
                       <div className="mt-4 rounded-lg bg-zinc-900 p-3 text-sm">
                         <span className="text-white">
-                          {getPlayerName(goal.scorer)}
+                          {getPlayerName(goal.scorer)}{" "}
                         </span>
 
                         <span className="text-zinc-500"> {goal.minute}'</span>
+                        <span className="text-zinc-500">
+                          {" "}
+                          {goal.is_penalty && " (P)"}
+                        </span>
 
-                        {goal.assist && (
+                        {!goal.is_own_goal && (
                           <span className="text-zinc-500">
                             {" "}
                             • Assist: {getPlayerName(goal.assist)}
@@ -577,39 +675,99 @@ export default function EditScoreModal({
               })}
             </div>
           </div>
+          {/* ========================= POSTER PERTANDINGAN ========================= */}
+          <div className="space-y-3">
+            <label
+              htmlFor="match-poster"
+              className="block text-sm font-medium text-white"
+            >
+              Poster Pertandingan
+            </label>
 
+            {/* Preview poster lama atau poster baru */}
+            {posterPreview && (
+              <div className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 p-3">
+                <img
+                  src={
+                    posterFile
+                      ? URL.createObjectURL(posterFile)
+                      : posterPreview.startsWith("http")
+                        ? posterPreview
+                        : `http://localhost:3000${posterPreview.startsWith("/") ? posterPreview : `/images/matches/${posterPreview}`}`
+                  }
+                  alt="Poster pertandingan"
+                  className="max-h-72 w-full rounded-lg object-contain"
+                />
+                <p className="mt-2 text-xs text-zinc-500">
+                  {posterFile ? "Poster baru yang dipilih" : "Poster saat ini"}
+                </p>
+              </div>
+            )}
+
+            {!posterPreview && !posterFile && (
+              <div className="rounded-xl border border-dashed border-zinc-700 p-6 text-center">
+                <p className="text-sm text-zinc-500">
+                  Belum ada poster pertandingan.
+                </p>
+              </div>
+            )}
+
+            <input
+              id="match-poster"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setPosterFile(file);
+              }}
+              className="block w-full rounded-lg border border-white/10 bg-[#191d22] p-3 text-sm text-zinc-300 file:mr-3 file:rounded-md file:border-0 file:bg-[#b9a078] file:px-3 file:py-2 file:font-medium file:text-black"
+            />
+
+            {posterFile && (
+              <p className="text-xs text-zinc-400">
+                File dipilih: {posterFile.name}
+              </p>
+            )}
+          </div>
           {/* ERROR */}
-
           {error && (
             <div className="rounded-lg bg-red-500/10 p-4 text-sm text-red-400">
               {error}
             </div>
           )}
-
           {/* BUTTON */}
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={handleResetResult}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
-            >
-              Reset Result
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg bg-zinc-800 px-5 py-2.5 text-white hover:bg-zinc-700"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              className="rounded-lg bg-white px-5 py-2.5 font-medium text-black hover:bg-zinc-200"
-            >
-              Save Changes
-            </button>
+          <div className="flex justify-between gap-3">
+            <div className="flex justify-between gap-3">
+              <button
+                type="button"
+                onClick={onDelete}
+                className="capitalize rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
+              >
+                delete match
+              </button>
+              <button
+                type="button"
+                onClick={onReset}
+                className="capitalize rounded-lg bg-zinc-800 px-5 py-2.5 text-white hover:bg-zinc-700"
+              >
+                reset match
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg bg-zinc-800 px-5 py-2.5 text-white hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="flex justify-center gap-2">
+              <button
+                type="submit"
+                className="rounded-lg bg-white px-5 py-2.5 font-medium text-black hover:bg-zinc-200"
+              >
+                Save Changes
+              </button>
+            </div>
           </div>
         </form>
       </div>

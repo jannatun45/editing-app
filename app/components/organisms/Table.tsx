@@ -37,6 +37,26 @@ export default function Table() {
     loadStandings();
   }, [season]);
 
+  const sanctionedClubIds = [
+    "6aaddf8688b36e2c1186f662",
+    "6aaddf6288b36e2c1186f661",
+  ];
+
+  const adjustedStandings = standings
+    .map((standing) => ({
+      ...standing,
+      adjustedPoints: sanctionedClubIds.includes(standing.club._id)
+        ? standing.points - 2
+        : standing.points,
+    }))
+    .sort(
+      (a, b) =>
+        b.adjustedPoints - a.adjustedPoints ||
+        b.goal_difference - a.goal_difference ||
+        b.goals_for - a.goals_for,
+    );
+  console.log(adjustedStandings);
+
   return (
     <div className="w-full">
       {/* Error */}
@@ -91,7 +111,7 @@ export default function Table() {
 
               {/* ================= BODY ================= */}
               <tbody className="divide-y divide-gray-100">
-                {standings.map((standing, index) => {
+                {adjustedStandings.map((standing, index) => {
                   const goalDifference = standing.goal_difference;
 
                   return (
@@ -173,7 +193,7 @@ export default function Table() {
 
                       {/* PTS */}
                       <Td className="text-center" spanClassName="font-bold">
-                        {standing.points}
+                        {standing.adjustedPoints}
                       </Td>
                     </tr>
                   );

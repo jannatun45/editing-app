@@ -1,34 +1,24 @@
 import {
-  Menu,
   Home,
-  LayoutDashboard,
-  Settings,
-  FolderPlus,
-  User,
-  Bell,
-  ShoppingCart,
-  Lock,
   LayoutFreeform,
-  List,
-  BookOpenText,
-  FileQuestionMark,
-  MonitorSmartphone,
-  Coffee,
   ArrowDownToLine,
+  Handshake,
+  Play,
   Volleyball,
+  CircleUserRound,
 } from "lucide-react";
 import type { MenuItem } from "~/types/sidenav/menuItems";
 
 export const menuItems: MenuItem[] = [
   {
-    label: "Home",
-    icon: Home,
+    label: "matches",
+    icon: Play,
     path: "/",
   },
   {
-    label: "matches",
-    icon: Volleyball,
-    path: "/matches",
+    label: "Players",
+    icon: CircleUserRound,
+    path: "/players",
   },
   {
     label: "standing",
@@ -36,23 +26,18 @@ export const menuItems: MenuItem[] = [
     path: "/standing",
   },
   {
-    label: "download",
-    icon: ArrowDownToLine,
-    path: "/download",
+    label: "standing copy",
+    icon: LayoutFreeform,
+    path: "/standing-copy",
   },
   {
-    label: "learning",
-    icon: BookOpenText,
-    path: "/learning",
-    children: [
-      {
-        label: "snippet",
-        path: "learning/snippet",
-      },
-      {
-        label: "git",
-        path: "learning/git",
-      },
-    ],
+    label: "top-scorers",
+    icon: Volleyball,
+    path: "/top-scorers",
+  },
+  {
+    label: "top-assists",
+    icon: Handshake,
+    path: "/top-assists",
   },
 ];

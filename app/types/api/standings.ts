@@ -2,6 +2,7 @@ export type StandingClub = {
   _id: string;
   name_club: string;
   logo: string | null;
+  sanction_points?: number | null;
 };
 
 export type Standing = {

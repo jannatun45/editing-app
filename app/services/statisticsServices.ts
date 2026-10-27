@@ -1,17 +1,25 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+// export interface PlayerStatistic {
+//   player: {
+//     _id: string;
+//     [key: string]: unknown;
+//   };
+//   club: {
+//     _id: string;
+//     name_club: string;
+//     logo?: string | null;
+//   };
+//   goals?: number;
+//   assists?: number;
+// }
 export interface PlayerStatistic {
-  player: {
-    _id: string;
-    [key: string]: unknown;
-  };
-  club: {
-    _id: string;
-    name_club: string;
-    logo?: string | null;
-  };
-  goals?: number;
-  assists?: number;
+  playerId: string;
+  playerName: string;
+  clubId: string;
+  clubName: string;
+  totalGoals: number;
+  totalAssists?: number;
 }
 
 interface StatisticResponse {
@@ -24,7 +32,7 @@ async function fetchStatistics(
   season: string,
 ): Promise<StatisticResponse> {
   const response = await fetch(
-    `${API_URL}/statistics/${endpoint}?season=${encodeURIComponent(season)}`,
+    `${API_URL}/${endpoint}?season=${encodeURIComponent(season)}`,
   );
 
   if (!response.ok) {

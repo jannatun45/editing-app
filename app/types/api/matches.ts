@@ -5,6 +5,7 @@ export type MatchPlayer = {
 export type MatchClub = {
   _id: string;
   name_club: string;
+  stadium?: string;
   logo: string | null;
 };
 
@@ -16,13 +17,17 @@ export type MatchGoal = {
   player: MatchPlayer;
   assist: MatchPlayer | null;
   is_penalty: boolean;
+  is_own_goal?: boolean;
 };
 
 export type MatchGoalInput = {
+  player: any;
   club: string;
   scorer: string;
   minute: string;
   assist: string;
+  is_own_goal: boolean;
+  is_penalty: boolean;
 };
 
 export type Match = {
@@ -38,4 +43,14 @@ export type Match = {
   goals: MatchGoal[];
   createdAt: string;
   updatedAt: string;
+  stadium?: string;
+  poster?: string | null;
+};
+
+export type UpdateMatchScorePayload = {
+  matchday: number;
+  match_date: string;
+  home_score: number;
+  away_score: number;
+  goals: MatchGoalInput[];
 };

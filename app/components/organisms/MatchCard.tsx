@@ -39,6 +39,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
 
   const formattedDate = matchDate
     ? matchDate.toLocaleDateString("id-ID", {
+        timeZone: "Asia/Jakarta",
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -47,8 +48,10 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
 
   const formattedTime = matchDate
     ? matchDate.toLocaleTimeString("id-ID", {
+        timeZone: "Asia/Jakarta",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
       })
     : null;
 
@@ -61,14 +64,14 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
   };
 
   return (
-    <article className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-700/70 bg-gradient-to-br from-[#101d30] via-[#0a1423] to-[#070d17] text-white transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-xl hover:shadow-amber-950/20">
+    <article className="group relative cursor-pointer overflow-hidden rounded-2xl border border-slate-700/70 bg-linear-to-br from-[#101d30] via-[#0a1423] to-[#070d17] text-white transition-all duration-300 hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-xl hover:shadow-amber-950/20">
       {/* Decorative background */}
-      <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-amber-400/[0.04] blur-3xl transition group-hover:bg-amber-400/[0.09]" />
+      <div className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-amber-400/4 blur-3xl transition group-hover:bg-amber-400/9" />
 
       {/* ================= HEADER ================= */}
       <div className="relative flex items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-3 sm:px-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-400/15 bg-amber-400/[0.08] text-amber-300">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-400/15 bg-amber-400/8 text-amber-300">
             <CalendarDays size={17} />
           </div>
 
@@ -120,7 +123,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
             type="button"
             title={`Lihat profil ${match.home_club.name_club}`}
             onClick={(event) => handleClubClick(event, match.home_club._id)}
-            className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 transition hover:scale-105 sm:h-[72px] sm:w-[72px] ${
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 transition hover:scale-105 sm:h-18 sm:w-18 ${
               homeWon
                 ? "border-amber-400/40 bg-amber-400/10 shadow-lg shadow-amber-950/20"
                 : "border-white/10 bg-white/[0.035] hover:border-amber-400/30"
@@ -158,7 +161,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
         </div>
 
         {/* Score */}
-        <div className="flex min-w-[76px] flex-col items-center sm:min-w-[110px]">
+        <div className="flex min-w-19 flex-col items-center sm:min-w-27.5">
           {isFinished ? (
             <>
               <div className="flex items-center gap-2 sm:gap-3">
@@ -188,7 +191,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
             </>
           ) : (
             <>
-              <span className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-lg font-black tracking-widest text-slate-300">
+              <span className="rounded-xl border border-white/10 bg-white/4 px-4 py-2 text-lg font-black tracking-widest text-slate-300">
                 VS
               </span>
 
@@ -205,7 +208,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
             type="button"
             title={`Lihat profil ${match.away_club.name_club}`}
             onClick={(event) => handleClubClick(event, match.away_club._id)}
-            className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 transition hover:scale-105 sm:h-[72px] sm:w-[72px] ${
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl border p-2 transition hover:scale-105 sm:h-18 sm:w-18 ${
               awayWon
                 ? "border-amber-400/40 bg-amber-400/10 shadow-lg shadow-amber-950/20"
                 : "border-white/10 bg-white/[0.035] hover:border-amber-400/30"
@@ -262,7 +265,7 @@ export default function MatchCard({ match, onClick }: MatchCardProps) {
       </div>
 
       {/* Bottom accent */}
-      <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-amber-400 to-yellow-200 transition-all duration-300 group-hover:w-full" />
+      <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-linear-to-r from-amber-400 to-yellow-200 transition-all duration-300 group-hover:w-full" />
     </article>
   );
 }
