@@ -190,6 +190,8 @@ export default function MatchPosterPage() {
     : "";
   const finished = match.status === "finished";
 
+  console.log("match-> ", match);
+
   return (
     <main className="min-h-screen bg-[#09090b] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto grid max-w-7xl items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
@@ -353,8 +355,8 @@ export default function MatchPosterPage() {
                 </header>
 
                 {/* main */}
-                <main className="relative z-10 mt-auto w-full py-9 px-16">
-                  <div className="relative z-10 mt-[5%] grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-[3%] mb-4">
+                <main className="relative z-10 mt-auto w-full py-9 px-16 ">
+                  <div className="relative z-10 mt-[5%] grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-[3%] mb-4 ">
                     {/* home logo */}
                     <div className="">
                       <div
@@ -385,7 +387,7 @@ export default function MatchPosterPage() {
                     </div>
 
                     {/* Score home & away */}
-                    <div className="min-w-0 max-w-full text-center">
+                    <div className="min-w-0 max-w-full text-center ">
                       <p className="whitespace-nowrap py-0 leading-none text-5xl font-extrabold">
                         {match.home_score ?? "-"}
                         <span className="mx-2" style={{ color: accent }}>
@@ -434,7 +436,7 @@ export default function MatchPosterPage() {
                   </div>
 
                   {/* goal events */}
-                  <div className="relative z-10 grid grid-cols-2 gap-x-[5%]">
+                  <div className="relative z-10 grid grid-cols-2 gap-x-[5%] px-3">
                     {[
                       {
                         name: homeName,

@@ -4,8 +4,9 @@ import { useParams } from "react-router";
 // import services
 import { getClubById, updateClub } from "~/services/clubsServices";
 import {
+  deleteMatch,
   getClubMatches,
-  resetMatchResult,
+  resetMatch,
   updateMatchScore,
 } from "~/services/matchServices";
 import { getStandings } from "~/services/standingServices";
@@ -50,9 +51,7 @@ export default function ClubProfile() {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const season = "2026/2027";
 
-  // =========================
-  // LOAD CLUB DATA
-  // =========================
+  // ========================= LOAD CLUB DATA =========================
   useEffect(() => {
     if (!id) return;
 
@@ -104,8 +103,6 @@ export default function ClubProfile() {
 
         const data = await getClubMatches(id);
 
-        console.log("Fixtures for club =>", id, data);
-
         setMatches(data);
       } catch (error) {
         console.error(error);
@@ -118,9 +115,7 @@ export default function ClubProfile() {
     loadFixtures();
   }, [id]);
 
-  // ========================
-  // LOAD GOAL EVENTS
-  // ========================
+  // ======================== LOAD GOAL EVENTS ========================
   useEffect(() => {
     if (!id) return;
 
@@ -172,6 +167,9 @@ export default function ClubProfile() {
       setError("ID club tidak ditemukan");
       return;
     }
+    console.log("submit pada page --club profile");
+    console.log("handle save di page club profile");
+    console.log("data selected: ", selectedMatch);
 
     try {
       setLoading(true);
@@ -238,10 +236,8 @@ export default function ClubProfile() {
     setShowEditClub(false);
   };
 
-  // =========================
-  // HANDLE RESET RESULT
-  // =========================
-  const handleResetResult = async () => {
+  // ========================= HANDLE DELETE MATCH =========================
+  const handleDeleteMatch = async () => {
     // posisi scroll saat ini
     const scrollPosition = window.scrollY;
     try {
@@ -252,8 +248,8 @@ export default function ClubProfile() {
         return;
       }
 
-      // RESET MATCH
-      await resetMatchResult(selectedMatch._id);
+      // DELETE MATCH
+      await deleteMatch(selectedMatch._id);
 
       // REFRESH DATA
       const updatedMatch = await getClubMatches(id!);
@@ -287,10 +283,58 @@ export default function ClubProfile() {
       setLoading(false);
     }
   };
+  // ========================= HANDLE RESET MATCH =========================
+  const handleResetMatch = async () => {
+    // posisi scroll saat ini
+    const scrollPosition = window.scrollY;
+    try {
+      setLoading(true);
+      setError("");
+
+      if (!selectedMatch) {
+        return;
+      }
+
+      // RESET MATCH
+      await resetMatch(selectedMatch._id);
+
+      // REFRESH DATA
+      const updatedMatch = await getClubMatches(id!);
+
+      // Ambil semua standing season
+      const standings = await getStandings(season);
+
+      // Cari standing milik club ini
+      const clubStanding = standings.find(
+        (standing) => standing.club._id === id,
+      );
+
+      setMatches(updatedMatch);
+      setSelectedMatch(null);
+      setStanding(clubStanding ?? null);
+
+      // Kembalikan posisi scroll
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: scrollPosition,
+          behavior: "instant",
+        });
+      });
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal mereset hasil pertandingan",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-48">
       {/* ========================= CLUB HEADER ========================= */}
-      <section className="relative isolate mt-2 min-h-[360px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 md:min-h-[420px]">
+      <section className="relative isolate mt-2 min-h-90 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 md:min-h-105">
         {/* Background stadion */}
         <img
           src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=2000&q=85"
@@ -299,10 +343,10 @@ export default function ClubProfile() {
         />
 
         {/* Overlay agar teks terbaca */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/80 to-black/20" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/90 via-transparent to-black/20" />
+        <div className="absolute inset-0 -z-10 bg-linear-to-r from-black via-black/80 to-black/20" />
+        <div className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-transparent to-black/20" />
 
-        <div className="flex min-h-[360px] flex-col justify-between p-6 md:min-h-[420px] md:p-10">
+        <div className="flex min-h-90 flex-col justify-between p-6 md:min-h-105 md:p-10">
           {/* Label atas */}
           <div className="flex items-center justify-between">
             <span className="rounded-full border border-white/15 bg-black/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-300 backdrop-blur-md">
@@ -380,130 +424,306 @@ export default function ClubProfile() {
         </div>
       </section>
       {/* ========================= CLUB LOCATION ========================= */}
-      <section className="relative isolate overflow-hidden rounded-2xl border border-slate-700/70 bg-[#07111f]">
-        {/* Background stadion */}
-        <img
-          src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1600&q=85"
-          alt="Football stadium"
-          className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40"
-        />
 
-        {/* Overlay */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#07111f] via-[#07111f]/95 to-[#07111f]/35" />
-
-        <div className="grid gap-6 p-6 md:grid-cols-2 md:p-8">
-          {/* Stadium */}
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-2xl text-amber-400">
-              <span aria-hidden="true">⌂</span>
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">
-                Home Ground
-              </p>
-              <h3 className="mt-2 truncate text-lg font-bold text-white">
-                {club.stadium || "Stadium belum diatur"}
-              </h3>
-              <p className="mt-1 text-sm text-slate-400">
-                Official Home Stadium
-              </p>
-            </div>
-          </div>
-
-          {/* District */}
-          <div className="flex items-center gap-4 border-t border-white/10 pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-2xl text-amber-400">
-              <span aria-hidden="true">⌖</span>
-            </div>
-
-            <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">
-                Club District
-              </p>
-              <h3 className="mt-2 truncate text-lg font-bold text-white">
-                {club.district || "District belum diatur"}
-              </h3>
-              <p className="mt-1 text-sm text-slate-400">Club Location</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Gold accent */}
-        <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-amber-300/40 to-transparent" />
-      </section>
       {/* ========================= STANDING STATISTICS ========================= */}
-      <section className="overflow-hidden rounded-2xl border border-slate-700/70 bg-gradient-to-br from-[#0b1728] via-[#07111f] to-[#050b14] p-5 md:p-8">
-        {/* Heading */}
-        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+
+      <section className="relative overflow-hidden rounded-3xl border border-white/8 bg-[#080e19] p-5 shadow-2xl shadow-black/20 md:p-8">
+        {/* Background decoration */}
+        <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-emerald-400/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-amber-400/[0.04] blur-3xl" />
+
+        {/* Header */}
+        <div className="relative mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-400/10 text-3xl text-amber-400">
-              <span aria-hidden="true">
-                ▥ <i data-lucide="chart-no-axes-combined"></i>{" "}
-              </span>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+              <i data-lucide="chart-no-axes-combined" className="h-6 w-6" />
             </div>
 
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">
-                Statistics
-              </h2>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Team Performance · {season}
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">
+                  Team Statistics
+                </h2>
+                <span className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+                  Overview
+                </span>
+              </div>
+              <p className="mt-1 text-xs font-medium tracking-wide text-slate-500">
+                Performance Analytics · {season}
               </p>
             </div>
           </div>
 
-          <span className="rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-amber-300">
-            Season {season}
-          </span>
+          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+            <span className="text-xs font-semibold text-slate-300">
+              Season {season}
+            </span>
+          </div>
         </div>
 
         {standing ? (
           <>
-            {/* Statistics cards */}
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+            {/* Main layout */}
+            <div className="relative grid gap-5 lg:grid-cols-5">
+              {/* Donut chart panel */}
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:p-7 lg:col-span-3">
+                <div className="mb-6 flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Match Results
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Distribution of team results
+                    </p>
+                  </div>
+
+                  <span className="rounded-lg bg-white/[0.05] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    {standing.match > 0 ? "Season stats" : "No matches"}
+                  </span>
+                </div>
+
+                {(() => {
+                  const wins = Math.max(0, Number(standing.win) || 0);
+                  const draws = Math.max(0, Number(standing.draw) || 0);
+                  const losses = Math.max(0, Number(standing.lose) || 0);
+                  const matches = Math.max(0, Number(standing.match) || 0);
+                  const totalResults = wins + draws + losses;
+                  const radius = 70;
+                  const circumference = 2 * Math.PI * radius;
+
+                  const winLength =
+                    totalResults > 0
+                      ? (wins / totalResults) * circumference
+                      : 0;
+                  const drawLength =
+                    totalResults > 0
+                      ? (draws / totalResults) * circumference
+                      : 0;
+                  const lossLength =
+                    totalResults > 0
+                      ? (losses / totalResults) * circumference
+                      : 0;
+
+                  const segments = [
+                    {
+                      label: "Wins",
+                      value: wins,
+                      color: "#34d399",
+                      length: winLength,
+                      offset: 0,
+                    },
+                    {
+                      label: "Draws",
+                      value: draws,
+                      color: "#fbbf24",
+                      length: drawLength,
+                      offset: winLength,
+                    },
+                    {
+                      label: "Losses",
+                      value: losses,
+                      color: "#fb7185",
+                      length: lossLength,
+                      offset: winLength + drawLength,
+                    },
+                  ];
+
+                  return (
+                    <div className="grid items-center gap-7 sm:grid-cols-2 sm:gap-5">
+                      {/* SVG donut */}
+                      <div className="mx-auto w-full max-w-[240px]">
+                        <div className="relative mx-auto aspect-square w-full">
+                          <div className="pointer-events-none absolute inset-[15%] rounded-full bg-emerald-400/[0.04] blur-2xl" />
+
+                          <svg
+                            viewBox="0 0 180 180"
+                            className="relative h-full w-full -rotate-90 overflow-visible"
+                            role="img"
+                            aria-label={`Match results: ${wins} wins, ${draws} draws, ${losses} losses`}
+                          >
+                            <circle
+                              cx="90"
+                              cy="90"
+                              r={radius}
+                              fill="none"
+                              stroke="rgba(255,255,255,0.055)"
+                              strokeWidth="15"
+                            />
+
+                            {segments.map((segment) => (
+                              <circle
+                                key={segment.label}
+                                cx="90"
+                                cy="90"
+                                r={radius}
+                                fill="none"
+                                stroke={segment.color}
+                                strokeWidth="15"
+                                strokeDasharray={`${Math.max(0, segment.length - (segment.value > 0 ? 2 : 0))} ${circumference}`}
+                                strokeDashoffset={-segment.offset}
+                                strokeLinecap="round"
+                                className="transition-all duration-700 ease-out"
+                              />
+                            ))}
+                          </svg>
+
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                              Matches
+                            </span>
+                            <span className="mt-1 text-4xl font-black tracking-tighter text-white sm:text-5xl">
+                              {matches}
+                            </span>
+                            <span className="mt-1 text-[10px] font-medium text-slate-500">
+                              Played
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Legend */}
+                      <div className="space-y-5">
+                        {segments.map((segment) => {
+                          const percentage =
+                            totalResults > 0
+                              ? (segment.value / totalResults) * 100
+                              : 0;
+
+                          return (
+                            <div key={segment.label} className="group">
+                              <div className="mb-2 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2.5">
+                                  <span
+                                    className="h-2.5 w-2.5 rounded-full"
+                                    style={{
+                                      backgroundColor: segment.color,
+                                      boxShadow: `0 0 12px ${segment.color}55`,
+                                    }}
+                                  />
+                                  <span className="text-sm font-semibold text-slate-300">
+                                    {segment.label}
+                                  </span>
+                                </div>
+
+                                <div className="text-right">
+                                  <span className="text-base font-black text-white">
+                                    {segment.value}
+                                  </span>
+                                  <span className="ml-1.5 text-xs text-slate-500">
+                                    {percentage.toFixed(0)}%
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                                <div
+                                  className="h-full rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `${percentage}%`,
+                                    backgroundColor: segment.color,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <div className="border-t border-white/[0.07] pt-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-500">
+                              Win rate
+                            </span>
+                            <span className="text-lg font-black text-emerald-300">
+                              {totalResults > 0
+                                ? `${((wins / totalResults) * 100).toFixed(1)}%`
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Points highlight */}
+              <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-amber-300/15 bg-gradient-to-br from-amber-300/[0.12] via-[#15140f] to-[#0d1019] p-6 lg:col-span-2">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-amber-300/[0.08] blur-2xl" />
+
+                <div className="relative flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70">
+                      Total Points
+                    </p>
+                    <p className="mt-3 text-5xl font-black tracking-tighter text-white sm:text-6xl">
+                      {standing.points}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      Points earned this season
+                    </p>
+                  </div>
+
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-300">
+                    <i data-lucide="trophy" className="h-6 w-6" />
+                  </div>
+                </div>
+
+                <div className="relative mt-8 border-t border-white/[0.08] pt-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-slate-400">
+                      Points per match
+                    </span>
+                    <span className="text-sm font-bold text-amber-200">
+                      {Number(standing.match) > 0
+                        ? (
+                            Number(standing.points) / Number(standing.match)
+                          ).toFixed(2)
+                        : "—"}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                    <div
+                      className="h-full rounded-full bg-linear-to-r from-amber-500 to-yellow-200"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Number(standing.match) > 0
+                            ? (Number(standing.points) /
+                                (Number(standing.match) * 3)) *
+                                100
+                            : 0,
+                        )}%`,
+                      }}
+                    />
+                  </div>
+
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    Points earned compared with the maximum available
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Supporting statistics */}
+            <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                {
-                  label: "Points",
-                  value: standing.points,
-                  icon: "★",
-                  color: "amber",
-                },
-                {
-                  label: "Matches",
-                  value: standing.match,
-                  icon: "⚽",
-                  color: "blue",
-                },
-                {
-                  label: "Wins",
-                  value: standing.win,
-                  icon: "♜",
-                  color: "emerald",
-                },
-                {
-                  label: "Draws",
-                  value: standing.draw,
-                  icon: "⇄",
-                  color: "amber",
-                },
-                {
-                  label: "Losses",
-                  value: standing.lose,
-                  icon: "×",
-                  color: "rose",
-                },
                 {
                   label: "Goals For",
                   value: standing.goals_for,
-                  icon: "⚽",
-                  color: "violet",
+                  icon: "goal",
+                  color: "text-emerald-300",
+                  bg: "bg-emerald-400/10",
+                  border: "border-emerald-400/10",
                 },
                 {
                   label: "Goals Against",
                   value: standing.goals_againts,
-                  icon: "⬡",
-                  color: "cyan",
+                  icon: "shield",
+                  color: "text-rose-300",
+                  bg: "bg-rose-400/10",
+                  border: "border-rose-400/10",
                 },
                 {
                   label: "Goal Difference",
@@ -511,125 +731,93 @@ export default function ClubProfile() {
                     standing.goal_difference > 0
                       ? `+${standing.goal_difference}`
                       : standing.goal_difference,
-                  icon: "◎",
-                  color: "teal",
+                  icon: "trending-up",
+                  color:
+                    standing.goal_difference > 0
+                      ? "text-emerald-300"
+                      : standing.goal_difference < 0
+                        ? "text-rose-300"
+                        : "text-slate-300",
+                  bg:
+                    standing.goal_difference > 0
+                      ? "bg-emerald-400/10"
+                      : standing.goal_difference < 0
+                        ? "bg-rose-400/10"
+                        : "bg-white/[0.05]",
+                  border: "border-white/[0.07]",
                 },
-              ].map((stat) => {
-                const colors = {
-                  amber: {
-                    border: "border-amber-400/20",
-                    icon: "bg-amber-400/10 text-amber-300 ring-amber-400/20",
-                    value: "text-amber-300",
-                    bottom: "bg-amber-400",
-                  },
-                  blue: {
-                    border: "border-blue-400/20",
-                    icon: "bg-blue-400/10 text-blue-300 ring-blue-400/20",
-                    value: "text-blue-300",
-                    bottom: "bg-blue-400",
-                  },
-                  emerald: {
-                    border: "border-emerald-400/20",
-                    icon: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
-                    value: "text-emerald-300",
-                    bottom: "bg-emerald-400",
-                  },
-                  rose: {
-                    border: "border-rose-400/20",
-                    icon: "bg-rose-400/10 text-rose-300 ring-rose-400/20",
-                    value: "text-rose-300",
-                    bottom: "bg-rose-400",
-                  },
-                  violet: {
-                    border: "border-violet-400/20",
-                    icon: "bg-violet-400/10 text-violet-300 ring-violet-400/20",
-                    value: "text-violet-300",
-                    bottom: "bg-violet-400",
-                  },
-                  cyan: {
-                    border: "border-cyan-400/20",
-                    icon: "bg-cyan-400/10 text-cyan-300 ring-cyan-400/20",
-                    value: "text-cyan-300",
-                    bottom: "bg-cyan-400",
-                  },
-                  teal: {
-                    border: "border-teal-400/20",
-                    icon: "bg-teal-400/10 text-teal-300 ring-teal-400/20",
-                    value: "text-teal-300",
-                    bottom: "bg-teal-400",
-                  },
-                };
-
-                const style = colors[stat.color as keyof typeof colors];
-
-                return (
-                  <div
-                    key={stat.label}
-                    className={`group relative overflow-hidden rounded-2xl border ${style.border} bg-slate-900/60 p-4 transition duration-300 hover:-translate-y-1 hover:bg-slate-800/80 md:p-5`}
-                  >
-                    {/* Decorative background */}
-                    <div className="pointer-events-none absolute -right-3 -top-5 select-none text-8xl font-black text-white/[0.025] transition group-hover:text-white/[0.06]">
-                      {stat.icon}
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        className={`flex h-11 w-11 items-center justify-center rounded-full text-xl ring-1 ${style.icon}`}
-                      >
-                        {stat.icon}
-                      </div>
-
-                      <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                        {stat.label}
-                      </p>
-
-                      <p
-                        className={`mt-2 text-3xl font-black tracking-tight text-white md:text-4xl`}
-                      >
-                        {stat.value}
-                      </p>
-                    </div>
-
-                    <div
-                      className={`absolute bottom-0 left-0 h-1 w-full ${style.bottom} opacity-80 transition group-hover:h-1.5`}
-                    />
+                {
+                  label: "Avg. Goals",
+                  value:
+                    Number(standing.match) > 0
+                      ? (
+                          Number(standing.goals_for) / Number(standing.match)
+                        ).toFixed(2)
+                      : "—",
+                  icon: "chart-no-axes-combined",
+                  color: "text-sky-300",
+                  bg: "bg-sky-400/10",
+                  border: "border-sky-400/10",
+                },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white/[0.025] p-4 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.05] sm:p-5`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:text-xs">
+                      {stat.label}
+                    </span>
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}
+                    >
+                      <i data-lucide={stat.icon} className="h-4 w-4" />
+                    </span>
                   </div>
-                );
-              })}
+
+                  <p
+                    className={`mt-4 text-2xl font-black tracking-tight ${stat.color} sm:text-3xl`}
+                  >
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
             </div>
 
             {/* Footer */}
-            <div className="mt-7 flex flex-wrap items-center gap-3 border-t border-white/10 pt-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10 text-xl text-amber-400">
-                ★
+            <div className="relative mt-7 flex flex-wrap items-center gap-3 border-t border-white/[0.07] pt-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/10 bg-amber-300/[0.06] text-amber-300">
+                <i data-lucide="trophy" className="h-4 w-4" />
               </div>
 
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.25em] text-amber-300">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">
                   Bigger Dreams
                 </p>
-                <p className="mt-1 text-xs font-medium tracking-wider text-slate-400">
-                  Stronger Together
+                <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-500">
+                  Stronger Together · {season}
                 </p>
               </div>
 
-              <div className="ml-auto hidden h-px min-w-10 flex-1 bg-gradient-to-r from-amber-400/50 to-transparent sm:block" />
+              <div className="ml-auto hidden h-px min-w-10 flex-1 bg-linear-to-r from-amber-300/30 to-transparent sm:block" />
             </div>
           </>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 px-6 py-12 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800 text-2xl text-slate-400">
-              ▥
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-slate-500">
+              <i data-lucide="chart-no-axes-combined" className="h-6 w-6" />
             </div>
 
-            <h3 className="mt-4 font-bold text-white">No Statistics Yet</h3>
-
-            <p className="mt-2 text-sm text-slate-400">
+            <h3 className="mt-5 text-base font-bold text-white">
+              No Statistics Yet
+            </h3>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
               Belum ada statistik untuk klub ini pada musim {season}.
             </p>
           </div>
         )}
       </section>
+
       {/* ========================= PLAYERS ========================= */}
       <section className="mt-10">
         {/* Header */}
@@ -830,7 +1018,8 @@ export default function ClubProfile() {
           match={selectedMatch}
           onClose={() => setSelectedMatch(null)}
           onSave={handleSaveScore}
-          onReset={handleResetResult}
+          onReset={handleResetMatch}
+          onDelete={handleDeleteMatch}
         />
       )}
     </div>

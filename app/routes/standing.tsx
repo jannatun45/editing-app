@@ -1,750 +1,512 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import {
-  Trophy,
-  Shield,
   CalendarDays,
-  TrendingUp,
-  RefreshCw,
-  AlertCircle,
-  ChevronDown,
-  ImageIcon,
   Download,
+  RefreshCw,
+  Shield,
+  Trophy,
 } from "lucide-react";
 
 import Container from "~/components/templates/Container";
 import { getStandings } from "~/services/standingServices";
 import type { Standing } from "~/types/api/standings";
-import { toPng } from "html-to-image";
-// import { Club } from "../types/api/clubs";
+
+const exportFormats = [
+  {
+    label: "Instagram Portrait · 4:5",
+    value: "instagram",
+    width: 1080,
+    height: 1350,
+  },
+  {
+    label: "Instagram Square · 1:1",
+    value: "square",
+    width: 1080,
+    height: 1080,
+  },
+  {
+    label: "Story / Reels / TikTok · 9:16",
+    value: "story",
+    width: 1080,
+    height: 1920,
+  },
+  { label: "Landscape · 16:9", value: "landscape", width: 1920, height: 1080 },
+  { label: "Poster HD · 4:5", value: "hd", width: 2160, height: 2700 },
+];
+
+const accents = [
+  { label: "Merah", value: "#ef233c" },
+  { label: "Emas", value: "#eab308" },
+  { label: "Biru", value: "#38bdf8" },
+  { label: "Hijau", value: "#22c55e" },
+  { label: "Ungu", value: "#a78bfa" },
+  { label: "Putih", value: "#f4f4f5" },
+];
+
+const API_BASE = "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL;
+
+function getLogoUrl(file?: string | null) {
+  if (!file) return "";
+  if (/^https?:\/\//i.test(file)) return file;
+  const cleanPath = file.replace(/^\/+/, "");
+  if (cleanPath.startsWith("uploads/") || cleanPath.startsWith("images/")) {
+    return `${API_BASE}/${cleanPath}`;
+  }
+  return `${API_BASE}/images/clubs/${cleanPath}`;
+}
 
 export default function StandingPage() {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [season, setSeason] = useState("2026/2027");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const [size, setSize] = useState("instagram");
+  const [accent, setAccent] = useState("#ef233c");
+  const [downloading, setDownloading] = useState(false);
+  const posterRef = useRef<HTMLDivElement>(null);
+  const [currentMatchday, setCurrentMatchday] = useState(1);
 
-  const exportRef = useRef<HTMLDivElement>(null);
+  const selectedSize =
+    exportFormats.find((format) => format.value === size) ?? exportFormats[0];
 
-  const [exportSize, setExportSize] = useState("instagram");
+  useEffect(() => {
+    let cancelled = false;
 
-  const [customWidth, setCustomWidth] = useState(1080);
-  const [customHeight, setCustomHeight] = useState(1350);
-  const [exporting, setExporting] = useState(false);
-
-  const exportFormats = {
-    instagram: {
-      label: "Instagram Feed · 4:5",
-      width: 1080,
-      height: 1350,
-    },
-    square: {
-      label: "Instagram Square · 1:1",
-      width: 1080,
-      height: 1080,
-    },
-    story: {
-      label: "Story / Reels / TikTok · 9:16",
-      width: 1080,
-      height: 1920,
-    },
-    landscape: {
-      label: "Landscape · 16:9",
-      width: 1920,
-      height: 1080,
-    },
-    custom: {
-      label: "Ukuran khusus",
-      width: customWidth,
-      height: customHeight,
-    },
-  };
-
-  const selectedFormat =
-    exportFormats[exportSize as keyof typeof exportFormats];
-
-  const downloadStanding = async () => {
-    if (!exportRef.current || exporting || adjustedStandings.length === 0) {
-      return;
+    async function loadStandings() {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getStandings(season);
+        if (!cancelled) setStandings(data);
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Gagal mengambil data klasemen.",
+          );
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
 
-    try {
-      setExporting(true);
+    loadStandings();
+    return () => {
+      cancelled = true;
+    };
+  }, [season, reloadKey]);
 
-      const dataUrl = await toPng(exportRef.current, {
-        width: selectedFormat.width,
-        height: selectedFormat.height,
-        pixelRatio: 1,
+  // useaeffect ngambil matchday terbaru
+  useEffect(() => {
+    async function loadMatchday() {
+      try {
+        const response = await fetch(
+          `${API_URL}/matches?season=${encodeURIComponent(season)}`,
+        );
+
+        if (!response.ok) {
+          throw new Error("Gagal mengambil data pekan.");
+        }
+
+        const result = await response.json();
+
+        // Mendukung respons berupa array atau object berisi data
+        const fixtures = Array.isArray(result)
+          ? result
+          : (result.data ?? result.matches ?? []);
+
+        const playedMatchdays = fixtures
+          .filter(
+            (fixture: { matchday?: number; status?: string }) =>
+              fixture.status === "finished" &&
+              typeof fixture.matchday === "number",
+          )
+          .map((fixture: { matchday: number }) => fixture.matchday);
+
+        setCurrentMatchday(
+          playedMatchdays.length > 0 ? Math.max(...playedMatchdays) : 1,
+        );
+      } catch (error) {
+        console.error("Gagal mengambil pekan pertandingan:", error);
+      }
+    }
+
+    loadMatchday();
+  }, [season]);
+
+  const adjustedStandings = useMemo(() => {
+    const sanctionedClubIds = [
+      "6aaddf8688b36e2c1186f662",
+      "6aaddf6288b36e2c1186f661",
+    ];
+
+    return standings
+      .map((standing) => ({
+        ...standing,
+        adjustedPoints: sanctionedClubIds.includes(standing.club._id)
+          ? standing.points - 2
+          : standing.points,
+      }))
+      .sort(
+        (a, b) =>
+          b.adjustedPoints - a.adjustedPoints ||
+          b.goal_difference - a.goal_difference ||
+          b.goals_for - a.goals_for,
+      );
+  }, [standings]);
+
+  async function downloadStanding() {
+    const node = posterRef.current;
+    if (!node || downloading || adjustedStandings.length === 0) return;
+
+    try {
+      setDownloading(true);
+      await Promise.all(
+        Array.from(node.querySelectorAll("img")).map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+              }),
+        ),
+      );
+
+      const pixelRatio = selectedSize.width / node.offsetWidth;
+      const dataUrl = await toPng(node, {
+        pixelRatio,
         cacheBust: true,
-        backgroundColor: "#0b1120",
+        backgroundColor: "#08090d",
       });
 
       const link = document.createElement("a");
-      link.download = `klasemen-${season.replace("/", "-")}-${exportSize}.png`;
+      link.download = `klasemen-${season.replace("/", "-")}-${size}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (error) {
-      console.error("Gagal membuat gambar klasemen:", error);
+    } catch (err) {
+      console.error("Gagal mengunduh gambar klasemen:", err);
       setError(
-        "Gagal membuat gambar. Periksa logo klub, URL gambar, dan coba lagi.",
+        "Gambar gagal dibuat. Periksa URL logo klub dan izin CORS backend.",
       );
     } finally {
-      setExporting(false);
+      setDownloading(false);
     }
-  };
-
-  const loadStandings = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await getStandings(season);
-
-      // console.log("Fetched standings for season", season, ":", data);
-      setStandings(data);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Gagal mengambil data klasemen",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStandings();
-  }, [season]);
-
-  const getPositionStyle = (index: number) => {
-    if (index === 0) {
-      return "bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30";
-    }
-
-    if (index === 1) {
-      return "bg-zinc-300/10 text-zinc-300 ring-1 ring-zinc-400/20";
-    }
-
-    if (index === 2) {
-      return "bg-orange-500/10 text-orange-300 ring-1 ring-orange-400/20";
-    }
-
-    return "bg-zinc-800 text-zinc-400";
-  };
-
-  const sanctionedClubIds = [
-    "6aaddf8688b36e2c1186f662",
-    "6aaddf6288b36e2c1186f661",
-  ];
-
-  const adjustedStandings = standings
-    .map((standing) => ({
-      ...standing,
-      adjustedPoints: sanctionedClubIds.includes(standing.club._id)
-        ? standing.points - 2
-        : standing.points,
-    }))
-    .sort(
-      (a, b) =>
-        b.adjustedPoints - a.adjustedPoints ||
-        b.goal_difference - a.goal_difference ||
-        b.goals_for - a.goals_for,
-    );
+  }
 
   return (
     <Container>
-      <div className="min-h-full space-y-7 pb-8 text-white">
-        {/* HEADER */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#182438] via-[#111827] to-[#0b1120] p-6 sm:p-8">
-          {/* Background decoration */}
-          <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
-
-          <div className="relative flex flex-col justify-between gap-6 md:flex-row md:items-center">
+      <main className="min-h-screen bg-[#09090b] py-6 text-white sm:py-8">
+        <div className="mx-auto grid max-w-7xl items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+          {/* aside */}
+          <aside className="space-y-6 rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">
-                <Trophy size={14} />
-                League Competition
+              <div
+                className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/4"
+                style={{ color: accent }}
+              >
+                <Trophy size={22} />
               </div>
-
-              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-                League <span className="text-amber-400">Standing</span>
+              <h1 className="text-2xl font-black tracking-tight">
+                Standing <span style={{ color: accent }}>Studio</span>
               </h1>
-
-              <p className="mt-2 max-w-lg text-sm leading-6 text-zinc-400 sm:text-base">
-                Klasemen liga, statistik pertandingan, dan persaingan klub
-                sepanjang musim.
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Buat poster klasemen liga dengan tampilan editorial sepak bola.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <label
-                htmlFor="season"
-                className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-zinc-400"
-              >
-                <CalendarDays size={15} />
-                Pilih Musim
-              </label>
-
-              <div className="relative">
-                <select
-                  id="season"
-                  value={season}
-                  onChange={(event) => setSeason(event.target.value)}
-                  className="w-full appearance-none rounded-xl border border-white/10 bg-[#0b1120] py-3 pl-4 pr-11 text-sm font-bold text-white outline-none transition hover:border-amber-400/40 focus:border-amber-400 sm:min-w-40"
-                >
-                  <option value="2026/2027">2026/2027</option>
-                  <option value="2027/2028">2027/2028</option>
-                </select>
-
-                <ChevronDown
-                  size={16}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="relative mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-5 text-xs text-zinc-400">
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              Data klasemen musim {season}
-            </span>
-
-            <span className="flex items-center gap-2">
-              <Shield size={14} />
-              Statistik klub
-            </span>
-          </div>
-        </section>
-
-        {/* DOWNLOAD STANDING */}
-        <section className="rounded-2xl border border-white/10 bg-[#111827] p-5 sm:p-6">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
-              <ImageIcon size={22} />
-            </div>
-
-            <div>
-              <h2 className="text-lg font-bold text-white">Export Klasemen</h2>
-              <p className="mt-1 text-sm text-zinc-400">
-                Unduh gambar klasemen musim {season} untuk media sosial.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="export-size"
-                className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400"
-              >
-                Format gambar
-              </label>
-
+            <label className="block text-sm">
+              <span className="mb-2 flex items-center gap-2 text-zinc-400">
+                <CalendarDays size={15} /> Pilih musim
+              </span>
               <select
-                id="export-size"
-                value={exportSize}
-                onChange={(event) => setExportSize(event.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-sm text-white outline-none focus:border-amber-400"
+                value={season}
+                onChange={(event) => setSeason(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-white/30"
               >
-                {Object.entries(exportFormats).map(([key, format]) => (
-                  <option key={key} value={key}>
-                    {format.label}
+                <option value="2026/2027">2026/2027</option>
+                <option value="2027/2028">2027/2028</option>
+              </select>
+            </label>
+
+            <label className="block text-sm">
+              <span className="mb-2 block text-zinc-400">Ukuran poster</span>
+              <select
+                value={size}
+                onChange={(event) => setSize(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-zinc-950 px-3 py-3 text-white outline-none focus:border-white/30"
+              >
+                {exportFormats.map((format) => (
+                  <option key={format.value} value={format.value}>
+                    {format.label} — {format.width} × {format.height}
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
 
             <div>
-              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Resolusi gambar
-              </label>
-
-              <div className="rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-sm font-bold text-amber-300">
-                {selectedFormat.width} × {selectedFormat.height} px
+              <span className="mb-3 block text-sm text-zinc-400">
+                Warna aksen
+              </span>
+              <div className="flex flex-wrap gap-3">
+                {accents.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    title={item.label}
+                    aria-label={`Pilih warna ${item.label}`}
+                    onClick={() => setAccent(item.value)}
+                    className={`h-8 w-8 rounded-full transition ${
+                      accent === item.value
+                        ? "ring-2 ring-white ring-offset-2 ring-offset-zinc-900"
+                        : "hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: item.value }}
+                  />
+                ))}
               </div>
             </div>
-          </div>
 
-          {exportSize === "custom" && (
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-2 block text-xs text-zinc-400">
-                  Lebar (px)
-                </label>
-                <input
-                  type="number"
-                  min={320}
-                  max={4000}
-                  value={customWidth}
-                  onChange={(event) =>
-                    setCustomWidth(
-                      Math.max(
-                        320,
-                        Math.min(4000, Number(event.target.value) || 320),
-                      ),
-                    )
-                  }
-                  className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-white outline-none focus:border-amber-400"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-xs text-zinc-400">
-                  Tinggi (px)
-                </label>
-                <input
-                  type="number"
-                  min={320}
-                  max={4000}
-                  value={customHeight}
-                  onChange={(event) =>
-                    setCustomHeight(
-                      Math.max(
-                        320,
-                        Math.min(4000, Number(event.target.value) || 320),
-                      ),
-                    )
-                  }
-                  className="w-full rounded-xl border border-white/10 bg-[#0b1120] px-4 py-3 text-white outline-none focus:border-amber-400"
-                />
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={downloadStanding}
-            disabled={exporting || loading || adjustedStandings.length === 0}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-5 py-3.5 text-sm font-bold text-[#111827] transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-          >
-            <Download size={18} />
-            {exporting ? "Membuat Gambar..." : "Download Klasemen PNG"}
-          </button>
-
-          <p className="mt-3 text-xs leading-5 text-zinc-500">
-            File PNG akan dibuat sesuai resolusi yang dipilih. Gambar ini hanya
-            berisi desain klasemen, bukan seluruh halaman.
-          </p>
-        </section>
-
-        {/* DESAIN KHUSUS UNTUK GAMBAR EXPORT */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "fixed",
-            left: "-20000px",
-            top: 0,
-            width: selectedFormat.width,
-            height: selectedFormat.height,
-            overflow: "hidden",
-            background: "#0b1120",
-            color: "#ffffff",
-            fontFamily: "Arial, sans-serif",
-          }}
-        >
-          <div
-            ref={exportRef}
-            style={{
-              boxSizing: "border-box",
-              width: selectedFormat.width,
-              height: selectedFormat.height,
-              padding: Math.max(32, selectedFormat.width * 0.045),
-              background: "linear-gradient(145deg, #182438, #0b1120 65%)",
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ marginBottom: 24 }}>
-              <div
-                style={{
-                  color: "#fbbf24",
-                  fontSize: selectedFormat.width * 0.018,
-                  fontWeight: 800,
-                  letterSpacing: 4,
-                  marginBottom: 14,
-                }}
-              >
-                LEAGUE COMPETITION
-              </div>
-
-              <div
-                style={{
-                  fontSize: selectedFormat.width * 0.047,
-                  fontWeight: 900,
-                  lineHeight: 1.1,
-                }}
-              >
-                LEAGUE <span style={{ color: "#fbbf24" }}>STANDING</span>
-              </div>
-
-              <div
-                style={{
-                  marginTop: 12,
-                  color: "#a1a1aa",
-                  fontSize: selectedFormat.width * 0.018,
-                }}
-              >
-                Klasemen Liga Indonesia · Musim {season}
-              </div>
-
-              <div
-                style={{
-                  marginTop: 20,
-                  height: 4,
-                  background: "#fbbf24",
-                  borderRadius: 4,
-                }}
-              />
-            </div>
-
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <table
-                style={{
-                  width: "100%",
-                  tableLayout: "fixed",
-                  borderCollapse: "collapse",
-                  fontSize: Math.max(
-                    11,
-                    Math.min(
-                      25,
-                      (selectedFormat.height * 0.57) /
-                        Math.max(adjustedStandings.length, 1) /
-                        1.8,
-                    ),
-                  ),
-                }}
-              >
-                <colgroup>
-                  <col style={{ width: "9%" }} />
-                  <col style={{ width: "39%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "7%" }} />
-                </colgroup>
-
-                {/* header download */}
-                <thead>
-                  <tr style={{ background: "#fbbf24", color: "#111827" }}>
-                    {["POS", "KLUB", "M", "M", "S", "K", "GM", "SG", "PTS"].map(
-                      (heading, index) => (
-                        <th
-                          key={`${heading}-${index}`}
-                          style={{
-                            padding: "12px 4px",
-                            textAlign: index === 1 ? "left" : "center",
-                            fontWeight: 900,
-                          }}
-                        >
-                          {heading}
-                        </th>
-                      ),
-                    )}
-                  </tr>
-                </thead>
-
-                {/* body download */}
-                <tbody>
-                  {adjustedStandings.map((standing, index) => (
-                    <tr
-                      key={standing._id}
-                      style={{
-                        background: index % 2 === 0 ? "#172235" : "#101a2a",
-                        borderBottom: "1px solid #293548",
-                      }}
-                    >
-                      <td style={{ padding: "10px 3px", textAlign: "center" }}>
-                        <span
-                          style={{
-                            color: index === 0 ? "#fbbf24" : "#e4e4e7",
-                            fontWeight: 900,
-                          }}
-                        >
-                          {index + 1}
-                        </span>
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "10px 5px",
-                          fontWeight: 700,
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {standing.club.name_club}
-                      </td>
-
-                      <td style={{ textAlign: "center" }}>{standing.match}</td>
-                      <td style={{ textAlign: "center" }}>{standing.win}</td>
-                      <td style={{ textAlign: "center" }}>{standing.draw}</td>
-                      <td style={{ textAlign: "center" }}>{standing.lose}</td>
-                      <td style={{ textAlign: "center" }}>
-                        {standing.goals_for}
-                      </td>
-                      <td style={{ textAlign: "center" }}>
-                        {standing.goal_difference}
-                      </td>
-
-                      <td
-                        style={{
-                          textAlign: "center",
-                          color: "#fbbf24",
-                          fontWeight: 900,
-                        }}
-                      >
-                        {standing.adjustedPoints}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div
-              style={{
-                paddingTop: 18,
-                color: "#71717a",
-                fontSize: selectedFormat.width * 0.014,
-                textAlign: "center",
-              }}
-            >
-              OFFICIAL LEAGUE STANDINGS · {season}
-            </div>
-          </div>
-        </div>
-
-        {/* LOADING */}
-        {loading && (
-          <div className="flex min-h-64 flex-col items-center justify-center gap-4 rounded-2xl border border-white/5 bg-[#111827]">
-            <RefreshCw size={30} className="animate-spin text-amber-400" />
-            <div className="text-center">
-              <p className="font-semibold text-white">Memuat klasemen</p>
-              <p className="mt-1 text-sm text-zinc-500">
-                Mengambil data klub dan statistik musim...
+            <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+              <p className="text-xs text-zinc-500">Resolusi ekspor</p>
+              <p className="mt-1 font-bold">
+                {selectedSize.width} × {selectedSize.height} px
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">
+                {adjustedStandings.length} klub · PNG
               </p>
             </div>
-          </div>
-        )}
 
-        {/* ERROR */}
-        {!loading && error && (
-          <div className="rounded-2xl border border-red-400/20 bg-red-400/5 p-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={22} className="mt-0.5 shrink-0 text-red-400" />
+            <button
+              type="button"
+              onClick={downloadStanding}
+              disabled={
+                downloading || loading || adjustedStandings.length === 0
+              }
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ backgroundColor: accent }}
+            >
+              {downloading ? (
+                <RefreshCw size={18} className="animate-spin" />
+              ) : (
+                <Download size={18} />
+              )}
+              {downloading ? "Menyiapkan PNG..." : "Download Klasemen PNG"}
+            </button>
 
-              <div className="flex-1">
-                <h2 className="font-bold text-red-300">
-                  Gagal memuat klasemen
-                </h2>
+            <p className="text-xs leading-5 text-zinc-500">
+              File PNG berisi desain poster klasemen saja, bukan seluruh
+              halaman.
+            </p>
+          </aside>
+          {/* main content */}
+          <section className="min-w-0 rounded-2xl border border-white/10 bg-zinc-900/50 p-4 sm:p-6">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="font-bold">Live Preview</h2>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Logo dan statistik mengikuti data klasemen musim terpilih.
+                </p>
+              </div>
+              <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-zinc-400">
+                {season}
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="flex min-h-64 items-center justify-center gap-3 text-zinc-400">
+                <RefreshCw size={20} className="animate-spin" /> Memuat
+                klasemen...
+              </div>
+            ) : error ? (
+              <div className="rounded-xl border border-red-400/20 bg-red-400/5 p-5">
+                <p className="font-bold text-red-300">Gagal memuat klasemen</p>
                 <p className="mt-1 text-sm text-zinc-400">{error}</p>
-
                 <button
                   type="button"
-                  onClick={loadStandings}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-400/10 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/20"
+                  onClick={() => setReloadKey((current) => current + 1)}
+                  className="mt-3 rounded-lg bg-white/10 px-3 py-2 text-sm font-semibold"
                 >
-                  <RefreshCw size={15} />
-                  Coba Lagi
+                  Periksa kembali
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* STANDINGS TABLE */}
-        {!loading && !error && (
-          <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#111827] shadow-2xl shadow-black/10">
-            {/* Table header */}
-            <div className="flex flex-col justify-between gap-3 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:p-6">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400">
-                    <Trophy size={20} />
-                  </div>
-
-                  <div>
-                    <h2 className="text-lg font-bold">Klasemen Liga</h2>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Musim {season}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 self-start rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2 sm:self-auto">
-                <TrendingUp size={16} className="text-emerald-400" />
-                <span className="text-xs font-medium text-zinc-300">
-                  {standings.length} Klub Terdaftar
-                </span>
-              </div>
-            </div>
-
-            {standings.length === 0 ? (
-              <div className="flex min-h-64 flex-col items-center justify-center px-5 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800 text-zinc-500">
-                  <Trophy size={28} />
-                </div>
-
-                <h3 className="mt-4 font-bold text-white">
-                  Belum Ada Data Klasemen
-                </h3>
-
-                <p className="mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                  Belum ada klub yang terdaftar pada musim {season}, atau data
-                  klasemen belum dibuat.
+            ) : adjustedStandings.length === 0 ? (
+              <div className="flex min-h-64 flex-col items-center justify-center text-center text-zinc-400">
+                <Trophy size={32} className="mb-3" />
+                <p className="font-bold text-white">Belum ada data klasemen</p>
+                <p className="mt-1 text-sm">
+                  Belum ada klub terdaftar pada musim {season}.
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-white/10 bg-white/[0.025] text-[11px] font-bold uppercase tracking-wider text-zinc-500">
-                      <th className="w-16 px-5 py-4 text-center">Pos</th>
-                      <th className="min-w-56 px-4 py-4 text-left">Klub</th>
-                      <th className="px-3 py-4 text-center">M</th>
-                      <th className="px-3 py-4 text-center">M</th>
-                      <th className="px-3 py-4 text-center">S</th>
-                      <th className="px-3 py-4 text-center">K</th>
-                      <th className="px-3 py-4 text-center">GM</th>
-                      <th className="px-3 py-4 text-center">GK</th>
-                      <th className="px-3 py-4 text-center">SG</th>
-                      <th className="px-5 py-4 text-center">PTS</th>
-                    </tr>
-                  </thead>
+              <div className="flex justify-center overflow-auto rounded-xl bg-black/40 p-2 sm:p-5">
+                <div
+                  className="w-full"
+                  style={{
+                    maxWidth:
+                      size === "story" ? 380 : size === "landscape" ? 900 : 560,
+                  }}
+                >
+                  <div
+                    ref={posterRef}
+                    className="relative isolate flex w-full flex-col overflow-hidden bg-[#08090d] py-4 pl-4 pr-18 "
+                    style={{
+                      aspectRatio: `${selectedSize.width}/${selectedSize.height}`,
+                      backgroundImage: `radial-gradient(ellipse at 0% 10%, ${accent}40 0%, transparent 42%), linear-gradient(145deg, #111827 0%, #08090d 68%)`,
+                    }}
+                  >
+                    <div
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1"
+                      style={{ backgroundColor: accent }}
+                    />
+                    {/* header */}
+                    <header className="flex justify-between relative z-10 border-b  border-green-500/10 pb-1.5 mb-4">
+                      <div className="flex flex-col gap-2">
+                        {/* <p className="font-extrabold tracking-widest text-[11px]">
+                          klasemen sementara 
+                        </p> */}
+                        <p className="capitalize text-[clamp(7px,1.5vw,11px)] tracking-[0.18em] text-white/45">
+                          Klasemen sementara · {season}
+                        </p>
 
-                  <tbody className="divide-y divide-white/[0.05]">
-                    {adjustedStandings.map((standing, index) => (
-                      <tr
-                        key={standing._id}
-                        className="group transition-colors duration-200 hover:bg-white/[0.035]"
-                      >
-                        {/* Position */}
-                        <td className="px-5 py-4 text-center">
-                          <span
-                            className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-black ${getPositionStyle(index)}`}
+                        <h3 className="text-2xl font-black uppercase leading-[0.95] tracking-wider">
+                          bri{" "}
+                          <span style={{ color: accent }}>super league</span>
+                        </h3>
+                      </div>
+                      <div>
+                        {" "}
+                        <span
+                          className="rounded px-2 py-1 text-[10px] font-black tracking-widest"
+                          style={{
+                            backgroundColor: accent,
+                            color: "#08090d",
+                          }}
+                        >
+                          PEKAN KE-{currentMatchday}
+                        </span>
+                      </div>
+                    </header>
+
+                    {/* main standing */}
+                    <div className="relative z-10 min-h-0 flex-1 ">
+                      <table className="w-full table-fixed border-collapse text-[clamp(7px,1.45vw,12px)]">
+                        <colgroup>
+                          <col style={{ width: "9%" }} />
+                          <col style={{ width: "39%" }} />
+                          <col style={{ width: "8%" }} />
+                          <col style={{ width: "8%" }} />
+                          <col style={{ width: "8%" }} />
+                          <col style={{ width: "8%" }} />
+                          <col style={{ width: "9%" }} />
+                          <col style={{ width: "11%" }} />
+                        </colgroup>
+                        <thead>
+                          <tr
+                            style={{
+                              backgroundColor: accent,
+                              color: "#08090d",
+                            }}
                           >
-                            {index + 1}
-                          </span>
-                        </td>
-
-                        {/* Club */}
-                        <td className="px-4 py-4">
-                          <Link
-                            to={`/club/${standing.club._id}`}
-                            className="flex w-fit items-center gap-3"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] p-1.5 transition group-hover:border-amber-400/30 group-hover:bg-amber-400/5">
-                              {standing.club.logo ? (
-                                <img
-                                  src={
-                                    standing.club.logo.startsWith("http")
-                                      ? standing.club.logo
-                                      : `http://localhost:3000/images/clubs/${standing.club.logo}`
-                                  }
-                                  alt={`Logo ${standing.club.name_club}`}
-                                  className="h-full w-full object-contain"
-                                />
-                              ) : (
-                                <Shield size={21} className="text-zinc-500" />
-                              )}
-                            </div>
-
-                            <div>
-                              <p className="font-bold text-zinc-100 transition group-hover:text-amber-300">
-                                {standing.club.name_club}
-                              </p>
-                              <p className="mt-1 text-[11px] text-zinc-500">
-                                Football Club
-                              </p>
-                            </div>
-                          </Link>
-                        </td>
-
-                        {/* Played */}
-                        <td className="px-3 py-4 text-center tabular-nums text-zinc-300">
-                          {standing.match}
-                        </td>
-
-                        {/* Wins */}
-                        <td className="px-3 py-4 text-center tabular-nums text-emerald-400">
-                          {standing.win}
-                        </td>
-
-                        {/* Draws */}
-                        <td className="px-3 py-4 text-center tabular-nums text-zinc-400">
-                          {standing.draw}
-                        </td>
-
-                        {/* Losses */}
-                        <td className="px-3 py-4 text-center tabular-nums text-red-400">
-                          {standing.lose}
-                        </td>
-
-                        {/* Goals for */}
-                        <td className="px-3 py-4 text-center tabular-nums text-zinc-300">
-                          {standing.goals_for}
-                        </td>
-
-                        {/* Goals against */}
-                        <td className="px-3 py-4 text-center tabular-nums text-zinc-400">
-                          {standing.goals_againts}
-                        </td>
-
-                        {/* Goal difference */}
-                        <td className="px-3 py-4 text-center tabular-nums">
-                          <span
-                            className={
-                              standing.goal_difference > 0
-                                ? "font-semibold text-emerald-400"
-                                : standing.goal_difference < 0
-                                  ? "font-semibold text-red-400"
-                                  : "text-zinc-400"
-                            }
-                          >
-                            {standing.goal_difference > 0 ? "+" : ""}
-                            {standing.goal_difference}
-                          </span>
-                        </td>
-
-                        {/* Points */}
-                        <td className="px-5 py-4 text-center">
-                          <span className="inline-flex min-w-12 items-center justify-center rounded-lg bg-amber-400/10 px-3 py-2 text-base font-black tabular-nums text-amber-300 transition group-hover:bg-amber-400/15">
-                            {standing.adjustedPoints}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            {[
+                              "POS",
+                              "CLUB",
+                              "MP",
+                              "W",
+                              "D",
+                              "L",
+                              "GD",
+                              "PTS",
+                            ].map((heading) => (
+                              <th
+                                key={heading}
+                                className="px-1 py-[1.5%] text-center font-black"
+                              >
+                                {heading}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adjustedStandings.map((standing, index) => (
+                            <tr
+                              key={standing._id}
+                              className="border-b border-white/[0.07]"
+                              style={{
+                                backgroundColor:
+                                  index % 2 === 0 ? "#151923" : "#0d1119",
+                              }}
+                            >
+                              <td
+                                className="px-1 py-[1.35%] text-center font-black"
+                                style={{
+                                  color: index === 0 ? accent : "#d4d4d8",
+                                }}
+                              >
+                                {index + 1}
+                              </td>
+                              <td className="px-1 py-[1.35%]">
+                                <div className="flex min-w-0 items-center gap-1.5">
+                                  {standing.club.logo ? (
+                                    <img
+                                      src={getLogoUrl(standing.club.logo)}
+                                      alt=""
+                                      crossOrigin="anonymous"
+                                      className="h-[1.45em] w-[1.45em] shrink-0 object-contain"
+                                      onError={(event) => {
+                                        event.currentTarget.style.display =
+                                          "none";
+                                      }}
+                                    />
+                                  ) : (
+                                    <Shield className="h-[1.25em] w-[1.25em] shrink-0 text-white/40" />
+                                  )}
+                                  <span className="truncate font-bold">
+                                    {standing.club.name_club}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-0.5 py-[1.35%] text-center text-white/70">
+                                {standing.match}
+                              </td>
+                              <td className="px-0.5 py-[1.35%] text-center text-emerald-400">
+                                {standing.win}
+                              </td>
+                              <td className="px-0.5 py-[1.35%] text-center text-white/60">
+                                {standing.draw}
+                              </td>
+                              <td className="px-0.5 py-[1.35%] text-center text-red-400">
+                                {standing.lose}
+                              </td>
+                              <td className="px-0.5 py-[1.35%] text-center text-white/70">
+                                {standing.goal_difference > 0 ? "+" : ""}
+                                {standing.goal_difference}
+                              </td>
+                              <td
+                                className="px-0.5 py-[1.35%] text-center font-black"
+                                style={{ color: accent }}
+                              >
+                                {standing.adjustedPoints}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Footer */}
-            {standings.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 bg-white/[0.02] px-5 py-4 text-[11px] text-zinc-500 sm:px-6">
-                <span className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-sm bg-amber-400" />
-                  Peringkat 1
-                </span>
-
-                <span>M: Main</span>
-                <span>S: Seri</span>
-                <span>K: Kalah</span>
-                <span>GM: Gol Memasukkan</span>
-                <span>GK: Gol Kemasukan</span>
-                <span>SG: Selisih Gol</span>
-              </div>
-            )}
+            <p className="mt-4 text-center text-xs text-zinc-500">
+              {selectedSize.width} × {selectedSize.height} px · PNG
+            </p>
           </section>
-        )}
-      </div>
+        </div>
+      </main>
     </Container>
   );
 }

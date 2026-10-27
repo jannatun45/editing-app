@@ -1,31 +1,21 @@
 import type { CreateMatchInput } from "~/components/organisms/CreateMatchModal";
-import type { Match, MatchGoalInput } from "~/types/api/matches";
-
-type UpdateMatchScorePayload = {
-  matchday: number;
-  match_date: string;
-  home_score: number;
-  away_score: number;
-  goals: MatchGoalInput[];
-};
+import type { Match, UpdateMatchScorePayload } from "~/types/api/matches";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 // DELETE MATCH / reset hasil pertandingan
-export async function resetMatchResult(id: string) {
-  const response = await fetch(`${API_URL}/match/${id}/result`, {
-    method: "PUT",
+export async function deleteMatch(id: string) {
+  const response = await fetch(`${API_URL}/match/${id}`, {
+    method: "DELETE",
   });
 
-  if (!response.ok) {
-    const error = await response.json();
+  const result = await response.json().catch(() => null);
 
-    throw new Error(error.message || "Gagal mereset hasil pertandingan");
+  if (!response.ok) {
+    throw new Error(result?.message || "Gagal mereset hasil pertandingan");
   }
 
-  const result = await response.json();
-
-  return result.data;
+  return result;
 }
 // Update jadwal pertandingan
 export async function updateMatch(
@@ -59,37 +49,25 @@ export async function updateMatch(
   return result.data;
 }
 
-// export async function updateMatch(
-//   id: string,
-//   matchday: number,
-//   matchDate: string,
-// ) {
-//   const response = await fetch(`${API_URL}/match/${id}`, {
-//     method: "PUT",
-//     headers: {
-//       "Content-Type": "application/json",
-//     },
-//     body: JSON.stringify({
-//       matchday,
-//       match_date: matchDate,
-//     }),
-//   });
-//   // console.log("updateFixture response:", response);
+// reset match
+export async function resetMatch(id: string) {
+  const response = await fetch(`${API_URL}/match/${id}/reset`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-//   if (!response.ok) {
-//     const error = await response.json();
+  const result = await response.json();
 
-//     throw new Error(error.message || "Gagal memperbarui jadwal");
-//   }
+  if (!response.ok) {
+    const error = await response.json();
 
-//   const result = await response.json();
+    throw new Error(error.message || "Gagal memperbarui jadwal");
+  }
 
-//   return result.data;
-// }
-
-// =========================
-// NEW DATA ADDED / data baru ditambahkan
-// =========================
+  return result.data;
+}
 
 // GET MATCHES / ambil semua pertandingan
 export async function getMatches(season?: string): Promise<Match[]> {
@@ -106,6 +84,7 @@ export async function getMatches(season?: string): Promise<Match[]> {
   return response.json();
 }
 
+// temukan pertandingan berdasarkan id
 export async function getMatchById(id: string): Promise<Match> {
   const response = await fetch(`${API_URL}/match/${id}`);
 
@@ -118,7 +97,7 @@ export async function getMatchById(id: string): Promise<Match> {
   return result.data;
 }
 
-// GET MATCH SCHEDULE BY CLUB / ambil jadwal pertandingan berdasarkan club
+// temukanjadwal pertandingan berdasarkan club
 export async function getClubMatches(clubId: string): Promise<Match[]> {
   const response = await fetch(`${API_URL}/matches/club/${clubId}`);
 
@@ -153,7 +132,7 @@ export async function updateMatchScore(
 
   return result.data;
 }
-
+// membuat pertandingan
 export async function createMatch(data: CreateMatchInput) {
   const response = await fetch(`${API_URL}/match`, {
     method: "POST",

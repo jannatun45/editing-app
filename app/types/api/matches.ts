@@ -21,11 +21,13 @@ export type MatchGoal = {
 };
 
 export type MatchGoalInput = {
+  player: any;
   club: string;
   scorer: string;
   minute: string;
   assist: string;
   is_own_goal: boolean;
+  is_penalty: boolean;
 };
 
 export type Match = {
@@ -43,4 +45,12 @@ export type Match = {
   updatedAt: string;
   stadium?: string;
   poster?: string | null;
+};
+
+export type UpdateMatchScorePayload = {
+  matchday: number;
+  match_date: string;
+  home_score: number;
+  away_score: number;
+  goals: MatchGoalInput[];
 };

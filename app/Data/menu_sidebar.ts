@@ -26,6 +26,11 @@ export const menuItems: MenuItem[] = [
     path: "/standing",
   },
   {
+    label: "standing copy",
+    icon: LayoutFreeform,
+    path: "/standing-copy",
+  },
+  {
     label: "top-scorers",
     icon: Volleyball,
     path: "/top-scorers",

@@ -8,7 +8,9 @@ import { getClubs } from "~/services/clubsServices";
 import { generateMatches } from "~/services/fixturesServices";
 import {
   createMatch,
+  deleteMatch,
   getMatches,
+  resetMatch,
   updateMatch,
   updateMatchScore,
 } from "~/services/matchServices";
@@ -80,9 +82,7 @@ export default function Matches() {
     (match) => match.matchday === currentMatchday,
   );
 
-  // =========================
-  // GENERATE MATCHES
-  // =========================
+  // ========================= GENERATE MATCHES =========================
   const handleGenerate = async () => {
     try {
       setLoading(true);
@@ -98,9 +98,7 @@ export default function Matches() {
     }
   };
 
-  // =========================
-  // HANDLE SAVE MATCH
-  // =========================
+  // ========================= HANDLE SAVE MATCH =========================
   const handleSaveMatch = async (
     matchday: number,
     matchDate: string,
@@ -114,17 +112,13 @@ export default function Matches() {
     if (!selectedMatch) {
       return;
     }
+    console.log("handle save di page matches");
+    console.log("data selected: ", selectedMatch);
     try {
       setLoading(true);
       setError("");
 
-      // 1. simpan skor dan goal event
-      console.log("sebelum function update score di jalankan");
-      console.log("shouldUpdateScore: ", shouldUpdateScore);
       if (shouldUpdateScore) {
-        console.log("update score ini di jalankan ");
-        console.log("shouldUpdateScore: ", shouldUpdateScore);
-
         await updateMatchScore(selectedMatch._id, {
           matchday,
           match_date: matchDate,
@@ -133,7 +127,6 @@ export default function Matches() {
           goals,
         });
       }
-      console.log("console sesudah function update score");
       // 2. update jadwal pertandingan
       await updateMatch(selectedMatch._id, matchday, matchDate, posterFile);
 
@@ -153,13 +146,14 @@ export default function Matches() {
     }
   };
 
-  // =========================
-  // HANDLE RESET RESULT
-  // =========================
-  const handleResetResult = async () => {
+  // ========================= HANDLE DELETE MATCH =========================
+  const handleDeleteMatch = async () => {
+    if (!selectedMatch) return;
+
     try {
       setLoading(true);
       setError("");
+      await deleteMatch(selectedMatch._id);
 
       await loadMatches();
 
@@ -175,9 +169,30 @@ export default function Matches() {
     }
   };
 
-  // =========================
-  // CREATE MATCH
-  // =========================
+  // ========================= HANDLE RESET MATCH =========================
+  const handleResetMatch = async () => {
+    if (!selectedMatch) return;
+
+    try {
+      setLoading(true);
+      setError("");
+      await resetMatch(selectedMatch._id);
+
+      await loadMatches();
+
+      setSelectedMatch(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui data pertandingan",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================= HNDLE CREATE OPEN MODAL =========================
   const handleOpenCreateModal = async () => {
     try {
       setError("");
@@ -193,6 +208,7 @@ export default function Matches() {
     }
   };
 
+  // ========================= CREATE MATCH =========================
   const handleCreateMatch = async (data: CreateMatchInput) => {
     try {
       setCreatingMatch(true);
@@ -311,21 +327,18 @@ export default function Matches() {
           </div>
         </div>
       </div>
-
       {/* ========================= ERROR ========================= */}
       {error && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
           {error}
         </div>
       )}
-
       {/* ========================= LOADING ========================= */}
       {loading && (
         <div className="py-10 text-center text-sm text-zinc-500">
           Loading matches...
         </div>
       )}
-
       {/* ========================= EMPTY ========================= */}
       {!loading && matches.length === 0 && (
         <div className="rounded-xl border border-dashed border-zinc-800 p-10 text-center">
@@ -342,7 +355,6 @@ export default function Matches() {
           </button>
         </div>
       )}
-
       {/* ========================= MATCH LIST ========================= */}
       {!loading && matches.length > 0 && (
         <div className="space-y-5">
@@ -412,13 +424,13 @@ export default function Matches() {
           </div>
         </div>
       )}
-
       {/* ========================= EDIT MODAL ========================= */}
       {selectedMatch && (
         <EditScoreModal
           match={selectedMatch}
           onClose={() => setSelectedMatch(null)}
-          onReset={handleResetResult}
+          onReset={handleResetMatch}
+          onDelete={handleDeleteMatch}
           onSave={handleSaveMatch}
         />
       )}

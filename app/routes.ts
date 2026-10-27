@@ -5,6 +5,7 @@ export default [
     // child routes
     index("./routes/matches.tsx"),
     route("standing", "./routes/standing.tsx"),
+    route("standing-copy", "./routes/standingcopy.tsx"),
     route("players", "./routes/players.tsx"),
     // route("download", "./routes/download.tsx"),
 
