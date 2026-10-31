@@ -9,7 +9,14 @@ import {
   RefreshCw,
   Trophy,
   Shield,
+  Zap,
+  Monitor,
+  Palette,
+  Image,
+  ChevronDown,
+  Radio,
 } from "lucide-react";
+
 import { getMatchById } from "~/services/matchServices";
 import type { Match } from "~/types/api/matches";
 
@@ -28,18 +35,16 @@ const posterSizes = [
 
 const API_BASE = "http://localhost:3000";
 
-/**
- * Ubah path ini agar sesuai dengan express.static di backend.
- * Contoh: app.use("/images", express.static("uploads"));
- * maka logo klub bisa diakses dari /images/clubs/nama-file.svg.
- */
 function getAssetUrl(file?: string | null) {
   if (!file) return "";
   if (/^https?:\/\//i.test(file)) return file;
+
   const cleanPath = file.replace(/^\/+/, "");
+
   if (cleanPath.startsWith("uploads/") || cleanPath.startsWith("images/")) {
     return `${API_BASE}/${cleanPath}`;
   }
+
   return `${API_BASE}/images/clubs/${cleanPath}`;
 }
 
@@ -47,24 +52,16 @@ function formatMinute(minute?: number) {
   return minute == null ? "" : `${minute}'`;
 }
 
-function initials(name?: string) {
-  return (name ?? "?")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0] ?? "")
-    .join("")
-    .toUpperCase();
-}
-
 export default function MatchPosterPage() {
   const { id } = useParams();
   const posterRef = useRef<HTMLDivElement>(null);
+
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [size, setSize] = useState("ig");
-  const [accent, setAccent] = useState("#ef233c");
+  const [accent, setAccent] = useState("#00f0ff");
+
   const selectedSize =
     posterSizes.find((item) => item.value === size) ?? posterSizes[0];
 
@@ -91,6 +88,7 @@ export default function MatchPosterPage() {
     }
 
     fetchMatch();
+
     return () => {
       cancelled = true;
     };
@@ -102,14 +100,22 @@ export default function MatchPosterPage() {
           goals?: Array<{
             _id?: string;
             minute?: number;
+            injury_time?: number;
+            is_penalty?: boolean;
             is_own_goal?: boolean;
             player?: {
               _id?: string;
               name_player?: string;
               photo?: string | null;
             };
-            assist?: { name_player?: string; photo?: string | null } | null;
-            club?: { _id?: string; name_club?: string };
+            assist?: {
+              name_player?: string;
+              photo?: string | null;
+            } | null;
+            club?: {
+              _id?: string;
+              name_club?: string;
+            };
           }>;
         })
       | null;
@@ -124,7 +130,7 @@ export default function MatchPosterPage() {
 
     try {
       setDownloading(true);
-      // Beri waktu agar gambar logo/foto selesai dirender.
+
       await Promise.all(
         Array.from(posterRef.current.querySelectorAll("img")).map((image) =>
           image.complete
@@ -138,10 +144,11 @@ export default function MatchPosterPage() {
 
       const node = posterRef.current;
       const pixelRatio = selectedSize.width / node.offsetWidth;
+
       const dataUrl = await toPng(node, {
         pixelRatio,
         cacheBust: true,
-        backgroundColor: "#08090d",
+        backgroundColor: "#050711",
       });
 
       const link = document.createElement("a");
@@ -150,22 +157,45 @@ export default function MatchPosterPage() {
       link.click();
     } catch (error) {
       console.error("Gagal mengunduh poster:", error);
-      alert(
-        "Poster gagal diunduh. Periksa URL logo/foto dan izin CORS backend.",
-      );
+      alert("Poster gagal diunduh. Periksa URL gambar dan izin CORS backend.");
     } finally {
       setDownloading(false);
     }
   }
 
-  if (loading) return <p className="p-6">Memuat pertandingan...</p>;
-  if (!match) return <p className="p-6">Pertandingan tidak ditemukan.</p>;
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#050711] text-cyan-400">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="animate-spin" size={32} />
+          <p className="text-sm font-bold tracking-[0.3em]">
+            LOADING MATCH DATA...
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!match) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#050711] text-white">
+        Pertandingan tidak ditemukan.
+      </main>
+    );
+  }
 
   const homeName = match.home_club?.name_club ?? "HOME";
   const awayName = match.away_club?.name_club ?? "AWAY";
+
   const homeLogo = getAssetUrl(match.home_club?.logo);
   const awayLogo = getAssetUrl(match.away_club?.logo);
+
   const matchDate = match.match_date ? new Date(match.match_date) : null;
+
+  const matchPoster = match.poster
+    ? `${API_BASE}/images/matches/${match.poster}`
+    : "";
+
   const dateLabel = matchDate
     ? matchDate
         .toLocaleDateString("id-ID", {
@@ -175,7 +205,8 @@ export default function MatchPosterPage() {
           timeZone: "Asia/Jakarta",
         })
         .toUpperCase()
-    : "TANGGAL BELUM TERSEDIA";
+    : "DATE NOT AVAILABLE";
+
   const timeLabel = matchDate
     ? `${matchDate.toLocaleTimeString("id-ID", {
         hour: "2-digit",
@@ -184,361 +215,633 @@ export default function MatchPosterPage() {
         timeZone: "Asia/Jakarta",
       })} WIB`
     : "";
+
   const finished = match.status === "finished";
 
+  const colors = [
+    { color: "#00f0ff", label: "Cyber Cyan" },
+    { color: "#a855f7", label: "Neon Purple" },
+    { color: "#ff2d75", label: "Neon Pink" },
+    { color: "#c6ff00", label: "Electric Lime" },
+    { color: "#facc15", label: "Cyber Gold" },
+    { color: "#3b82f6", label: "Electric Blue" },
+  ];
+
   return (
-    <main className="min-h-screen bg-[#09090b] px-4 py-8 text-white sm:px-8">
-      <div className="mx-auto grid max-w-7xl items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="space-y-5 rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
-          <div>
-            <h1 className="text-2xl font-black">
-              Match Poster <span className="text-red-500">Studio</span>
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Poster hasil pertandingan bergaya sports editorial.
-            </p>
-          </div>
+    <main className="relative min-h-screen overflow-hidden bg-[#050711] px-4 py-8 text-white sm:px-8">
+      {/* BACKGROUND EFFECT */}
+      <div
+        className="pointer-events-none fixed inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(0,240,255,.3) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.3) 1px,transparent 1px)",
+          backgroundSize: "45px 45px",
+        }}
+      />
 
-          <label className="block text-sm">
-            <span className="mb-2 block text-zinc-400">Ukuran poster</span>
-            <select
-              value={size}
-              onChange={(event) => setSize(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-zinc-950 px-3 py-3"
-            >
-              {posterSizes.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label} — {item.width} × {item.height}
-                </option>
-              ))}
-            </select>
-          </label>
+      <div className="pointer-events-none fixed -left-40 top-20 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
+      <div className="pointer-events-none fixed -right-40 bottom-0 h-96 w-96 rounded-full bg-purple-600/10 blur-[130px]" />
 
-          <div>
-            <span className="mb-3 block text-sm text-zinc-400">
-              Warna poster
-            </span>
-            <div className="flex flex-wrap gap-3">
-              {[
-                { color: "#ef233c", label: "Merah" },
-                { color: "#eab308", label: "Emas" },
-                { color: "#38bdf8", label: "Biru" },
-                { color: "#22c55e", label: "Hijau" },
-                { color: "#a78bfa", label: "Ungu" },
-              ].map(({ color, label }) => (
-                <button
-                  key={color}
-                  type="button"
-                  aria-label={`Pilih warna ${label}`}
-                  onClick={() => setAccent(color)}
-                  className={`h-8 w-8 rounded-full ${
-                    accent === color
-                      ? "ring-2 ring-white ring-offset-2 ring-offset-zinc-900"
-                      : ""
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
+      <div className="relative z-10 mx-auto max-w-[1500px]">
+        {/* PAGE HEADER */}
+        <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/10 pb-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-400 shadow-[0_0_25px_rgba(0,240,255,0.12)]">
+              <Zap size={25} />
+            </div>
+
+            <div>
+              <p className="text-[10px] font-bold tracking-[0.35em] text-cyan-400">
+                FUTURE SPORTS TECHNOLOGY
+              </p>
+              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
+                MATCH POSTER <span className="text-cyan-400">STUDIO.</span>
+              </h1>
             </div>
           </div>
 
-          <div className="rounded-xl bg-black/30 p-3 text-sm">
-            <p className="text-xs text-zinc-500">Resolusi ekspor</p>
-            <p className="mt-1 font-bold">
-              {selectedSize.width} × {selectedSize.height} px
-            </p>
+          <div className="flex items-center gap-2 self-start rounded-full border border-green-400/20 bg-green-400/5 px-4 py-2 md:self-center">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+            <span className="text-[10px] font-bold tracking-[0.2em] text-green-400">
+              DESIGN SYSTEM ONLINE
+            </span>
           </div>
+        </header>
 
-          <button
-            type="button"
-            onClick={downloadPoster}
-            disabled={downloading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-3.5 font-bold text-white transition hover:bg-red-400 disabled:opacity-60"
-          >
-            {downloading ? (
-              <RefreshCw size={18} className="animate-spin" />
-            ) : (
-              <Download size={18} />
-            )}
-            {downloading ? "Menyiapkan PNG..." : "Download Poster PNG"}
-          </button>
-        </aside>
+        <div className="grid items-start gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+          {/* SIDEBAR */}
+          <aside className="space-y-5">
+            {/* SETTINGS CARD */}
+            <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b1020]/90 shadow-2xl backdrop-blur-xl">
+              <div className="border-b border-white/10 bg-white/[0.025] p-5">
+                <div className="flex items-center gap-2">
+                  <Monitor size={17} className="text-cyan-400" />
+                  <h2 className="text-sm font-black tracking-wider">
+                    DESIGN CONTROL
+                  </h2>
+                </div>
 
-        <section className="min-w-0 rounded-2xl border border-white/10 bg-zinc-900/50 p-4 sm:p-6">
-          <div className="mb-5">
-            <h2 className="font-bold">Live Preview</h2>
-            <p className="mt-1 text-xs text-zinc-500">
-              Logo klub dan daftar pencetak gol mengikuti data pertandingan.
-            </p>
-          </div>
+                <p className="mt-2 text-xs text-zinc-500">
+                  Customize your match poster appearance.
+                </p>
+              </div>
 
-          <div className="flex justify-center overflow-auto rounded-xl bg-black/40 p-3 sm:p-6">
-            <div
-              className="w-full"
-              style={{
-                maxWidth:
-                  size === "story" ? 380 : size === "facebook" ? 720 : 500,
-              }}
-            >
+              <div className="space-y-6 p-5">
+                {/* SIZE */}
+                <div>
+                  <label className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    <Image size={15} className="text-cyan-400" />
+                    Poster Resolution
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      value={size}
+                      onChange={(event) => setSize(event.target.value)}
+                      className="w-full appearance-none rounded-xl border border-white/10 bg-[#080c18] px-4 py-3.5 pr-10 text-sm font-semibold text-white outline-none transition focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30"
+                    >
+                      {posterSizes.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDown
+                      size={16}
+                      className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-cyan-400"
+                    />
+                  </div>
+                </div>
+
+                {/* ACCENT COLOR */}
+                <div>
+                  <label className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
+                    <Palette size={15} className="text-cyan-400" />
+                    Neon Accent Color
+                  </label>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {colors.map(({ color, label }) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setAccent(color)}
+                        className={`group flex flex-col items-center gap-2 rounded-xl border p-3 transition ${
+                          accent === color
+                            ? "border-white/40 bg-white/10"
+                            : "border-white/5 bg-white/[0.02] hover:border-white/20"
+                        }`}
+                      >
+                        <span
+                          className="h-7 w-7 rounded-full transition group-hover:scale-110"
+                          style={{
+                            backgroundColor: color,
+                            boxShadow: `0 0 18px ${color}90`,
+                          }}
+                        />
+                        <span className="text-[9px] font-bold text-zinc-400">
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* RESOLUTION */}
+                <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] p-4">
+                  <p className="text-[10px] font-bold tracking-[0.2em] text-cyan-400">
+                    EXPORT RESOLUTION
+                  </p>
+
+                  <p className="mt-2 text-xl font-black tracking-tight">
+                    {selectedSize.width}
+                    <span className="mx-2 text-zinc-600">×</span>
+                    {selectedSize.height}
+                    <span className="ml-2 text-xs font-medium text-zinc-500">
+                      PX
+                    </span>
+                  </p>
+
+                  <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: "75%",
+                        backgroundColor: accent,
+                        boxShadow: `0 0 12px ${accent}`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* DOWNLOAD */}
+                <button
+                  type="button"
+                  onClick={downloadPoster}
+                  disabled={downloading}
+                  className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl px-5 py-4 text-sm font-black tracking-wider text-[#050711] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                  style={{
+                    backgroundColor: accent,
+                    boxShadow: `0 0 25px ${accent}35`,
+                  }}
+                >
+                  {downloading ? (
+                    <RefreshCw size={18} className="animate-spin" />
+                  ) : (
+                    <Download size={18} />
+                  )}
+
+                  {downloading ? "GENERATING PNG..." : "EXPORT POSTER"}
+
+                  <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-700 group-hover:translate-x-full" />
+                </button>
+
+                <p className="text-center text-[10px] text-zinc-600">
+                  HIGH QUALITY PNG · READY TO PUBLISH
+                </p>
+              </div>
+            </section>
+
+            {/* MATCH INFO */}
+            <section className="rounded-2xl border border-white/10 bg-[#0b1020]/90 p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <Radio size={16} className="text-purple-400" />
+                <h3 className="text-xs font-black tracking-wider">
+                  MATCH INFORMATION
+                </h3>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-zinc-500">Competition</span>
+                  <span className="text-xs font-bold">
+                    {match.season ?? "Football League"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-zinc-500">Matchday</span>
+                  <span className="text-xs font-bold text-cyan-400">
+                    #{match.matchday ?? "-"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-zinc-500">Status</span>
+                  <span
+                    className={`rounded-md px-2 py-1 text-[9px] font-black tracking-wider ${
+                      finished
+                        ? "bg-green-400/10 text-green-400"
+                        : "bg-yellow-400/10 text-yellow-400"
+                    }`}
+                  >
+                    {finished ? "FINISHED" : "UPCOMING"}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          {/* PREVIEW SECTION */}
+          <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#0b1020]/90 shadow-2xl">
+            {/* PREVIEW HEADER */}
+            <div className="flex flex-col justify-between gap-3 border-b border-white/10 p-5 sm:flex-row sm:items-center sm:px-7">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
+                  <h2 className="text-sm font-black tracking-wider">
+                    LIVE PREVIEW
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-xs text-zinc-500">
+                  Real-time poster visualization.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+                <Monitor size={14} className="text-cyan-400" />
+                <span className="text-[10px] font-bold text-zinc-400">
+                  {selectedSize.label}
+                </span>
+              </div>
+            </div>
+
+            {/* POSTER CANVAS */}
+            <div className="flex justify-center overflow-auto bg-[#050711] p-4 sm:p-8">
               <div
-                ref={posterRef}
-                className="relative isolate flex w-full flex-col overflow-hidden bg-[#08090d] p-[5%]"
+                className="w-full"
                 style={{
-                  aspectRatio: `${selectedSize.width}/${selectedSize.height}`,
-                  background: `radial-gradient(ellipse at 0% 15%, ${accent}55 0%, transparent 42%), radial-gradient(ellipse at 100% 20%, #1456a855 0%, transparent 42%), linear-gradient(145deg,#15151b 0%,#08090d 55%,#101116 100%)`,
+                  maxWidth:
+                    size === "story" ? 380 : size === "facebook" ? 720 : 500,
                 }}
               >
                 <div
-                  className="pointer-events-none absolute inset-y-0 left-0 w-0.75"
-                  style={{ backgroundColor: accent }}
-                />
-                <div className="pointer-events-none absolute left-[-25%] top-[12%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
-                <div className="pointer-events-none absolute right-[-25%] top-[20%] h-[30%] w-[80%] rotate-[-25deg] border border-white/10" />
+                  ref={posterRef}
+                  className="relative isolate flex w-full flex-col overflow-hidden bg-[#050711] text-white"
+                  style={{
+                    aspectRatio: `${selectedSize.width}/${selectedSize.height}`,
+                    backgroundImage: `
+                      radial-gradient(ellipse at 0% 10%, ${accent}45, transparent 45%),
+                      radial-gradient(ellipse at 100% 90%, #7c3aed35, transparent 45%),
+                      linear-gradient(145deg, #090d1b 0%, #050711 65%, #101027 100%)
+                      ${matchPoster ? `, url("${matchPoster}")` : ""}
+                    `,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                >
+                  {/* POSTER BACKGROUND EFFECTS */}
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-[0.12]"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.15) 1px,transparent 1px)",
+                      backgroundSize: "30px 30px",
+                    }}
+                  />
 
-                <header className="relative z-10 flex items-center justify-between gap-3 border-b border-white/20 pb-3">
-                  <div className="flex items-center gap-2">
-                    <Trophy size={22} style={{ color: accent }} />
-                    <div>
-                      <p className="text-[clamp(8px,1.8vw,12px)] font-black tracking-[0.2em]">
-                        FOOTBALL
-                      </p>
-                      <p className="text-[clamp(7px,1.4vw,10px)] tracking-[0.25em] text-white/50">
-                        {match.season ?? "MATCH REPORT"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[clamp(8px,1.8vw,12px)] font-black tracking-[0.18em]">
-                      MATCHDAY {match.matchday ?? "-"}
-                    </p>
-                    <p
-                      className="mt-1 inline-block px-2 py-1 text-[clamp(7px,1.5vw,10px)] font-black tracking-widest"
-                      style={{ backgroundColor: accent, color: "#08090d" }}
-                    >
-                      {finished
-                        ? "FULL TIME"
-                        : (match.status ?? "UPCOMING").toUpperCase()}
-                    </p>
-                  </div>
-                </header>
+                  <div
+                    className="pointer-events-none absolute -right-[20%] top-[15%] h-[35%] w-[70%] rotate-[-25deg] border opacity-30"
+                    style={{ borderColor: accent }}
+                  />
 
-                <div className="relative z-10 mt-[5%] grid grid-cols-[1fr_auto_1fr] items-center gap-[3%]">
-                  <div className="min-w-0 text-center">
-                    <div
-                      className="mx-auto flex aspect-square w-[88%] items-center justify-center rounded-full border border-white/20 bg-white/6 p-[12%]"
-                      style={{ boxShadow: `0 0 32px ${accent}22` }}
-                    >
-                      {homeLogo ? (
-                        <img
-                          src={homeLogo}
-                          alt={`${homeName} logo`}
-                          crossOrigin="anonymous"
-                          onError={(event) => {
-                            console.error(
-                              "Logo kandang gagal dimuat:",
-                              event.currentTarget.src,
-                            );
-                            event.currentTarget.style.display = "none";
-                          }}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <Shield
-                          style={{ color: accent }}
-                          className="h-full w-full"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-3 wrap-break-words text-[clamp(10px,2.5vw,19px)] font-black uppercase leading-tight">
-                      {homeName}
-                    </p>
-                    <p className="mt-1 text-[clamp(7px,1.5vw,10px)] font-bold tracking-[0.2em] text-white/40">
-                      HOME
-                    </p>
-                  </div>
+                  <div
+                    className="pointer-events-none absolute -left-[30%] bottom-[15%] h-[30%] w-[80%] rotate-[-25deg] border opacity-20"
+                    style={{ borderColor: accent }}
+                  />
 
-                  <div className="text-center">
-                    <p className="text-[clamp(8px,1.6vw,11px)] font-black tracking-[0.2em] text-white/50">
-                      SCORE
-                    </p>
-                    <p className="whitespace-nowrap text-[clamp(30px,8vw,62px)] font-black italic leading-none tracking-tighter">
-                      {match.home_score ?? "-"}
-                      <span className="mx-1" style={{ color: accent }}>
-                        :
-                      </span>
-                      {match.away_score ?? "-"}
-                    </p>
-                    <div
-                      className="mx-auto mt-2 h-1 w-12"
-                      style={{ backgroundColor: accent }}
-                    />
-                  </div>
+                  <div
+                    className="pointer-events-none absolute left-0 top-0 h-full w-[3px]"
+                    style={{
+                      backgroundColor: accent,
+                      boxShadow: `0 0 25px ${accent}`,
+                    }}
+                  />
 
-                  <div className="min-w-0 text-center">
-                    <div className="mx-auto flex aspect-square w-[88%] items-center justify-center rounded-full border border-white/20 bg-white/6 p-[12%]">
-                      {awayLogo ? (
-                        <img
-                          src={awayLogo}
-                          alt={`${awayName} logo`}
-                          crossOrigin="anonymous"
-                          onError={(event) => {
-                            console.error(
-                              "Logo tandang gagal dimuat:",
-                              event.currentTarget.src,
-                            );
-                            event.currentTarget.style.display = "none";
-                          }}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <Shield
-                          style={{ color: accent }}
-                          className="h-full w-full"
-                        />
-                      )}
-                    </div>
-                    <p className="mt-3 -wrap-break-words text-[clamp(10px,2.5vw,19px)] font-black uppercase leading-tight">
-                      {awayName}
-                    </p>
-                    <p className="mt-1 text-[clamp(7px,1.5vw,10px)] font-bold tracking-[0.2em] text-white/40">
-                      AWAY
-                    </p>
-                  </div>
-                </div>
+                  {/* POSTER HEADER */}
+                  <header className="relative z-10 mx-[7%] mt-[7%] flex items-start justify-between border-b border-white/20 pb-[4%]">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-lg"
+                        style={{
+                          backgroundColor: `${accent}20`,
+                          color: accent,
+                        }}
+                      >
+                        <Trophy size={22} />
+                      </div>
 
-                <div className="relative z-10 my-[5%] flex items-center gap-3">
-                  <div className="h-px flex-1 bg-white/20" />
-                  <p
-                    className="text-[clamp(8px,1.8vw,12px)] font-black tracking-[0.3em]"
-                    style={{ color: accent }}
-                  >
-                    MATCH HIGHLIGHTS
-                  </p>
-                  <div className="h-px flex-1 bg-white/20" />
-                </div>
-
-                <div className="relative z-10 grid grid-cols-2 gap-x-[5%]">
-                  {[
-                    { name: homeName, clubId: match.home_club?._id },
-                    { name: awayName, clubId: match.away_club?._id },
-                  ].map((team) => {
-                    const teamGoals = goals.filter((goal) => {
-                      const goalClubId = goal.club?._id;
-                      if (goalClubId && team.clubId)
-                        return goalClubId === team.clubId;
-                      return (
-                        goal.club?.name_club?.toLowerCase() ===
-                        team.name.toLowerCase()
-                      );
-                    });
-
-                    return (
-                      <div key={team.name} className="min-w-0 space-y-2">
-                        <p className="mb-2 border-b border-white/15 pb-2 text-[clamp(8px,1.7vw,12px)] font-black uppercase tracking-wider text-white/60">
-                          {team.name}
+                      <div>
+                        <p className="text-[clamp(9px,2vw,15px)] font-black tracking-[0.25em]">
+                          FOOTBALL
                         </p>
-                        {teamGoals.length ? (
-                          teamGoals.map((goal, index) => (
-                            <div
-                              key={goal._id ?? `${goal.minute}-${index}`}
-                              className="flex min-w-0 items-center gap-2"
-                            >
-                              {/* image player goal event */}
-                              {goal.player?.photo ? (
-                                <img
-                                  src={getAssetUrl(goal.player.photo)}
-                                  alt={goal.player.name_player ?? "Pemain"}
-                                  crossOrigin="anonymous"
-                                  className="h-[clamp(22px,5vw,42px)] w-[clamp(22px,5vw,42px)] shrink-0 rounded-full border border-white/30 object-cover"
-                                />
-                              ) : (
-                                <div
-                                  className="flex h-[clamp(22px,5vw,42px)] w-[clamp(22px,5vw,42px)] shrink-0 items-center justify-center rounded-full border border-white/30 text-[clamp(7px,1.5vw,11px)] font-black"
-                                  style={{
-                                    backgroundColor: `${accent}25`,
-                                    color: accent,
-                                  }}
-                                >
-                                  {initials(goal.player?.name_player)}
-                                </div>
-                              )}
-                              <div className="min-w-0 flex-1">
-                                {/* name player goal */}
-                                <p className="wrap-break-words text-[clamp(7px,1.7vw,12px)] font-bold leading-tight">
-                                  {goal.is_own_goal ? "OG " : ""}
-                                  {goal.player?.name_player ?? "Pencetak gol"}
-                                </p>
-                                {goal.assist?.name_player && (
-                                  // assist goal name
-                                  <p className="wrap-break-words text-[clamp(6px,1.35vw,9px)] leading-tight text-white/50">
-                                    Assist: {goal.assist.name_player}
-                                  </p>
-                                )}
-                              </div>
-                              <span
-                                className="shrink-0 text-[clamp(8px,1.7vw,12px)] font-black"
-                                style={{ color: accent }}
+                        <p className="text-[clamp(7px,1.4vw,10px)] tracking-[0.25em] text-white/50">
+                          {match.season ?? "MATCH REPORT"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div
+                        className="inline-block px-3 py-1 text-[clamp(8px,1.6vw,12px)] font-black tracking-widest text-black"
+                        style={{ backgroundColor: accent }}
+                      >
+                        MATCHDAY {match.matchday ?? "-"}
+                      </div>
+
+                      <p className="mt-2 text-[clamp(7px,1.5vw,11px)] font-bold tracking-wider">
+                        {dateLabel}
+                      </p>
+
+                      <p className="mt-1 flex items-center justify-end gap-1 text-[clamp(7px,1.4vw,10px)] text-white/50">
+                        <Clock3 size={10} />
+                        {timeLabel}
+                      </p>
+                    </div>
+                  </header>
+
+                  {/* MAIN SCOREBOARD */}
+                  <main className="relative z-10 my-auto w-full px-[7%] py-[8%]">
+                    <div className="mb-[7%] text-center">
+                      <p
+                        className="text-[clamp(10px,2vw,14px)] font-black tracking-[0.5em]"
+                        style={{ color: accent }}
+                      >
+                        {finished ? "FULL TIME" : "MATCH CENTER"}
+                      </p>
+
+                      <p className="mt-2 text-[clamp(7px,1.3vw,10px)] font-bold tracking-[0.3em] text-white/40">
+                        THE ULTIMATE FOOTBALL EXPERIENCE
+                      </p>
+                    </div>
+
+                    {/* TEAM + SCORE */}
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-[3%]">
+                      {/* HOME */}
+                      <div className="min-w-0 text-center">
+                        <div
+                          className="mx-auto flex aspect-square w-[85%] max-w-32 items-center justify-center rounded-2xl border bg-white/[0.04] p-[13%] backdrop-blur-md"
+                          style={{
+                            borderColor: `${accent}70`,
+                            boxShadow: `0 0 35px ${accent}20, inset 0 0 20px ${accent}10`,
+                          }}
+                        >
+                          {homeLogo ? (
+                            <img
+                              src={homeLogo}
+                              alt={`${homeName} logo`}
+                              crossOrigin="anonymous"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <Shield
+                              className="h-full w-full"
+                              style={{ color: accent }}
+                            />
+                          )}
+                        </div>
+
+                        <p className="mt-4 break-words text-[clamp(9px,2vw,15px)] font-black uppercase tracking-wider">
+                          {homeName}
+                        </p>
+
+                        <p className="mt-1 text-[clamp(7px,1.3vw,10px)] tracking-[0.2em] text-white/40">
+                          HOME
+                        </p>
+                      </div>
+
+                      {/* SCORE */}
+                      <div className="min-w-0 text-center">
+                        <div
+                          className="text-[clamp(34px,9vw,68px)] font-black leading-none tracking-[-0.08em]"
+                          style={{
+                            textShadow: `0 0 30px ${accent}60`,
+                          }}
+                        >
+                          {match.home_score ?? "-"}
+                          <span className="mx-1" style={{ color: accent }}>
+                            :
+                          </span>
+                          {match.away_score ?? "-"}
+                        </div>
+
+                        <div
+                          className="mx-auto mt-4 h-[2px] w-full"
+                          style={{
+                            backgroundColor: accent,
+                            boxShadow: `0 0 12px ${accent}`,
+                          }}
+                        />
+
+                        <p className="mt-3 text-[clamp(7px,1.3vw,10px)] font-black tracking-widest text-white/40">
+                          VS
+                        </p>
+                      </div>
+
+                      {/* AWAY */}
+                      <div className="min-w-0 text-center">
+                        <div
+                          className="mx-auto flex aspect-square w-[85%] max-w-32 items-center justify-center rounded-2xl border border-purple-400/40 bg-white/[0.04] p-[13%] backdrop-blur-md"
+                          style={{
+                            boxShadow: "0 0 35px rgba(168,85,247,0.15)",
+                          }}
+                        >
+                          {awayLogo ? (
+                            <img
+                              src={awayLogo}
+                              alt={`${awayName} logo`}
+                              crossOrigin="anonymous"
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <Shield className="h-full w-full text-purple-400" />
+                          )}
+                        </div>
+
+                        <p className="mt-4 break-words text-[clamp(9px,2vw,15px)] font-black uppercase tracking-wider">
+                          {awayName}
+                        </p>
+
+                        <p className="mt-1 text-[clamp(7px,1.3vw,10px)] tracking-[0.2em] text-white/40">
+                          AWAY
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* STADIUM */}
+                    <div className="mt-[8%] flex items-center justify-center gap-2 border-y border-white/10 py-3">
+                      <MapPin size={13} style={{ color: accent }} />
+
+                      <p className="text-center text-[clamp(7px,1.6vw,11px)] font-bold uppercase tracking-widest">
+                        {match.home_club?.stadium || "STADIUM NOT AVAILABLE"}
+                      </p>
+                    </div>
+
+                    {/* GOAL EVENTS */}
+                    <div className="mt-[8%]">
+                      <div className="mb-5 flex items-center justify-between">
+                        <p className="text-[clamp(9px,1.8vw,13px)] font-black tracking-[0.25em]">
+                          MATCH EVENTS
+                        </p>
+
+                        <span
+                          className="rounded-md px-2 py-1 text-[clamp(7px,1.3vw,9px)] font-black"
+                          style={{
+                            backgroundColor: `${accent}20`,
+                            color: accent,
+                          }}
+                        >
+                          {goals.length} GOALS
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-[6%]">
+                        {[
+                          {
+                            name: homeName,
+                            clubId: match.home_club?._id,
+                            side: "home",
+                          },
+                          {
+                            name: awayName,
+                            clubId: match.away_club?._id,
+                            side: "away",
+                          },
+                        ].map((team) => {
+                          const teamGoals = goals.filter((goal) => {
+                            const goalClubId = goal.club?._id;
+
+                            if (goalClubId && team.clubId) {
+                              return goalClubId === team.clubId;
+                            }
+
+                            return (
+                              goal.club?.name_club?.toLowerCase() ===
+                              team.name.toLowerCase()
+                            );
+                          });
+
+                          return (
+                            <div key={team.name} className="min-w-0">
+                              <div
+                                className="mb-3 border-b pb-2 text-[clamp(8px,1.5vw,10px)] font-black tracking-widest"
+                                style={{ borderColor: `${accent}50` }}
                               >
-                                {formatMinute(goal.minute)}
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-[clamp(7px,1.5vw,10px)] text-white/35"></p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                                {team.side === "home"
+                                  ? "HOME TEAM"
+                                  : "AWAY TEAM"}
+                              </div>
 
-                <footer className="relative z-10 mt-auto border-t border-white/20 pt-[4%]">
-                  <div className="grid grid-cols-[1fr_1fr] gap-3">
-                    <div className="flex min-w-0 items-start gap-2">
-                      <CalendarDays
-                        size={14}
-                        style={{ color: accent }}
-                        className="mt-0.5 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <p className="text-[clamp(7px,1.6vw,11px)] font-black">
-                          {dateLabel}
-                        </p>
-                        <p className="mt-1 flex items-center gap-1 text-[clamp(7px,1.5vw,10px)] text-white/60">
-                          <Clock3 size={11} /> {timeLabel}
-                        </p>
+                              {teamGoals.length > 0 ? (
+                                <div className="space-y-3">
+                                  {teamGoals.map((goal, index) => (
+                                    <div
+                                      key={
+                                        goal._id ?? `${goal.minute}-${index}`
+                                      }
+                                      className={`flex min-w-0 items-start gap-2 ${
+                                        team.side === "away"
+                                          ? "flex-row-reverse"
+                                          : ""
+                                      }`}
+                                    >
+                                      <div
+                                        className="shrink-0 rounded-md px-2 py-1 text-[clamp(7px,1.4vw,10px)] font-black"
+                                        style={{
+                                          backgroundColor: `${accent}20`,
+                                          color: accent,
+                                        }}
+                                      >
+                                        {formatMinute(goal.minute)}
+                                        {goal.injury_time
+                                          ? `+${goal.injury_time}`
+                                          : ""}
+                                        {goal.is_penalty ? " P" : ""}
+                                        {goal.is_own_goal ? " OG" : ""}
+                                      </div>
+
+                                      <div
+                                        className={`min-w-0 ${
+                                          team.side === "away"
+                                            ? "text-right"
+                                            : "text-left"
+                                        }`}
+                                      >
+                                        <p className="break-words text-[clamp(8px,1.6vw,11px)] font-bold leading-tight">
+                                          {goal.player?.name_player ??
+                                            "Unknown Player"}
+                                        </p>
+
+                                        {goal.assist?.name_player && (
+                                          <p className="mt-1 break-words text-[clamp(6px,1.2vw,9px)] text-white/40">
+                                            AST: {goal.assist.name_player}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-[clamp(7px,1.3vw,10px)] text-white/30">
+                                  No goals recorded
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    <div className="flex min-w-0 items-start gap-2">
-                      <MapPin
-                        size={14}
+                  </main>
+
+                  {/* FOOTER */}
+                  <footer className="relative z-10 mx-[7%] mb-[6%] flex items-center justify-between border-t border-white/20 pt-4">
+                    <div>
+                      <p
+                        className="text-[clamp(8px,1.5vw,11px)] font-black tracking-[0.25em]"
                         style={{ color: accent }}
-                        className="mt-0.5 shrink-0"
-                      />
-                      <p className="wrap-break-words text-[clamp(7px,1.6vw,11px)] font-bold uppercase">
-                        {match.home_club?.stadium ?? "Stadion belum tersedia"}
+                      >
+                        MATCHDAY EXPERIENCE
+                      </p>
+
+                      <p className="mt-1 text-[clamp(6px,1.2vw,9px)] tracking-widest text-white/40">
+                        FOOTBALL NEVER STOPS.
                       </p>
                     </div>
-                  </div>
-                  <div className="mt-[4%] flex items-center justify-between gap-2">
-                    <p className="text-[clamp(7px,1.5vw,10px)] font-black tracking-[0.22em] text-white/40">
-                      FINAL WHISTLE
-                    </p>
-                    <p
-                      className="text-right text-[clamp(8px,1.7vw,12px)] font-black italic tracking-wider"
-                      style={{ color: accent }}
-                    >
-                      ONE MATCH. ONE STORY.
-                    </p>
-                  </div>
-                </footer>
+
+                    <div className="flex items-center gap-1">
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: accent }}
+                      />
+                      <span className="text-[clamp(7px,1.2vw,9px)] font-black tracking-widest text-white/50">
+                        OFFICIAL MATCH
+                      </span>
+                    </div>
+                  </footer>
+                </div>
               </div>
             </div>
-          </div>
 
-          <p className="mt-4 text-center text-xs text-zinc-500">
-            {selectedSize.width} × {selectedSize.height} px · PNG
-          </p>
-        </section>
+            {/* PREVIEW FOOTER */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-white/[0.02] px-5 py-4 sm:px-7">
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: accent }}
+                />
+                <span className="text-[10px] font-bold tracking-wider text-zinc-400">
+                  CYBERPUNK THEME ACTIVE
+                </span>
+              </div>
+
+              <p className="text-[10px] font-bold text-zinc-500">
+                {selectedSize.width} × {selectedSize.height} PX · PNG
+              </p>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   );

@@ -17,6 +17,8 @@ export default [
     route("top-scorers", "routes/top-scorers.tsx"),
     route("top-assists", "routes/top-assists.tsx"),
 
+    route("stadium", "routes/Stadium.tsx"),
+
     route("*", "./routes/not-found.tsx"),
   ]),
 ] satisfies RouteConfig;

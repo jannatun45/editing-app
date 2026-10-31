@@ -47,15 +47,15 @@ function formatMinute(minute?: number) {
   return minute == null ? "" : `${minute}'`;
 }
 
-function initials(name?: string) {
-  return (name ?? "?")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0] ?? "")
-    .join("")
-    .toUpperCase();
-}
+// function initials(name?: string) {
+//   return (name ?? "?")
+//     .trim()
+//     .split(/\s+/)
+//     .slice(0, 2)
+//     .map((part) => part[0] ?? "")
+//     .join("")
+//     .toUpperCase();
+// }
 
 export default function MatchPosterPage() {
   const { id } = useParams();
@@ -396,13 +396,14 @@ export default function MatchPosterPage() {
                         {match.away_score ?? "-"}
                       </p>
 
-                      {/* stadion */}
+                      {/* stadion || STADIUM */}
                       <div className="min-w-0 max-w-40">
                         <span className="text-sm" style={{ color: accent }}>
                           Std.
                         </span>
                         <p className="max-w-full wrap-break-words text-[clamp(7px,8px,11px)] font-bold uppercase">
-                          {match.home_club?.stadium || "Stadion belum tersedia"}
+                          {match.home_club?.stadium?.name_stadium ||
+                            "Stadion belum tersedia"}
                           {/* Kapten I Wayan Dipta Gianyar */}
                         </p>
                       </div>
@@ -486,7 +487,6 @@ export default function MatchPosterPage() {
                               >
                                 {/* name player home n away */}
                                 <p className="wrap-break-words text-xs font-bold leading-tight">
-                                  {goal.is_own_goal ? "OG " : ""}
                                   {goal.player?.name_player ?? "Pencetak gol"}
                                 </p>
 
@@ -501,10 +501,16 @@ export default function MatchPosterPage() {
                               {/* minute tim home */}
                               {team.side === "home" && (
                                 <span
-                                  className="shrink-0 text-xs font-black"
+                                  className="shrink-0 text-[10px] font-black"
                                   style={{ color: accent }}
                                 >
-                                  {formatMinute(goal.minute)}
+                                  {goal.minute}
+                                  {goal.injury_time > 0
+                                    ? `+${goal.injury_time}`
+                                    : ""}
+                                  '{goal.is_penalty ? " (P)" : ""}
+                                  {goal.is_own_goal ? " (OG)" : ""}
+                                  {/* {formatMinute(goal.minute)} */}
                                 </span>
                               )}
                             </div>

@@ -1,35 +1,6 @@
-const API_URL = "http://localhost:3000/api/goal-events";
+import type { GoalEvent } from "~/types/api/goalEvents";
 
-export type GoalEvent = {
-  _id: string;
-  fixture:
-    | string
-    | {
-        _id: string;
-        matchday?: number;
-        homeScore?: number;
-        awayScore?: number;
-      };
-  season: string;
-  club: {
-    _id: string;
-    name_club: string;
-    logo?: string;
-  };
-  player: {
-    _id: string;
-    name_player: string;
-    number?: number;
-    photo?: string;
-  };
-  assist: {
-    _id: string;
-    name_player: string;
-    number?: number;
-    photo?: string;
-  } | null;
-  minute: number;
-};
+const API_URL = "http://localhost:3000/api/goal-events";
 
 export async function getGoalEventsByClub(
   id: string,

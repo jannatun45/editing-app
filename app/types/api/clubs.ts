@@ -1,19 +1,14 @@
-// 1. data club form
+import type { Stadium } from "./stadium";
 
-export type Club = {
-  _id: string;
-  id_player: string | null;
+// 1. data club form
+export interface Club {
   points: number;
-  logo: string | null;
+  _id: string;
   name_club: string;
-  stadium: string | null;
-  match: number;
-  win: number;
-  lose: number;
-  goals_for: number;
-  goals_againts: number;
-  goal_difference: number;
+  logo: string | null;
+  stadium: Stadium | null;
   district: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
+  penalty_applied: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}

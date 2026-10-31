@@ -32,6 +32,8 @@ export default function CreateMatchModal({
   // MENGAMBIL MATCHDAY TERBARU
   // =========================
 
+  console.log("Clubs: ", clubs);
+
   useEffect(() => {
     async function loadMatchday() {
       try {
@@ -160,12 +162,13 @@ export default function CreateMatchModal({
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-5 p-6 sm:p-8">
+          {/* season */}
           <div>
             <label
               htmlFor="season"
               className="mb-2 block text-xs font-medium text-[#a5aab2]"
             >
-              Musim
+              Season
             </label>
             <select
               id="season"
@@ -179,7 +182,7 @@ export default function CreateMatchModal({
               <option value="2024/2025">2024/2025</option>
             </select>
           </div>
-
+          {/* matchday */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label
@@ -217,7 +220,7 @@ export default function CreateMatchModal({
               />
             </div>
           </div>
-
+          {/* input match club */}
           <div className="rounded-xl border border-white/8 bg-[#0b0d10] p-4 sm:p-5">
             <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#858b94]">
               Pertandingan

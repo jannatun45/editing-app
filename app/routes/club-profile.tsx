@@ -76,6 +76,7 @@ export default function ClubProfile() {
 
         // Ambil data club
         const clubData = await getClubById(id);
+        console.log("club data in useeffect: ", clubData);
 
         setClub(clubData);
 
@@ -96,7 +97,6 @@ export default function ClubProfile() {
         setLoading(false);
       }
     };
-
     const loadFixtures = async () => {
       try {
         setLoadingFixtures(true);
@@ -334,35 +334,57 @@ export default function ClubProfile() {
   return (
     <div className="space-y-8 pb-48">
       {/* ========================= CLUB HEADER ========================= */}
-      <section className="relative isolate mt-2 min-h-90 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 md:min-h-105">
+      <section className="group relative isolate mt-2 min-h-90 overflow-hidden rounded-2xl border border-cyan-400/20 bg-[#050711] shadow-[0_0_35px_rgba(6,182,212,0.08)] md:min-h-105">
         {/* Background stadion */}
         <img
           src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=2000&q=85"
           alt="Stadion sepak bola"
-          className="absolute inset-0 -z-20 h-full w-full object-cover mask-y-from-70% mask-y-to-90%"
+          className="absolute inset-0 -z-20 h-full w-full object-cover opacity-50"
         />
 
-        {/* Overlay agar teks terbaca */}
-        <div className="absolute inset-0 -z-10 bg-linear-to-r from-black via-black/80 to-black/20" />
-        <div className="absolute inset-0 -z-10 bg-linear-to-t from-black/90 via-transparent to-black/20" />
+        {/* Cyberpunk overlays */}
+        <div className="absolute inset-0 -z-10 bg-linear-to-r from-[#050711] via-[#080d1c]/95 to-[#080d1c]/40" />
+        <div className="absolute inset-0 -z-10 bg-linear-to-t from-[#050711] via-transparent to-[#050711]/50" />
+
+        {/* Neon glow */}
+        <div className="absolute -right-20 -top-28 -z-10 h-80 w-80 rounded-full bg-cyan-500/10 blur-[100px]" />
+        <div className="absolute -bottom-32 left-1/3 -z-10 h-80 w-80 rounded-full bg-purple-600/10 blur-[100px]" />
+
+        {/* Grid decoration */}
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(34,211,238,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.5) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+            maskImage: "linear-gradient(to bottom, black, transparent 85%)",
+          }}
+        />
 
         <div className="flex min-h-90 flex-col justify-between p-6 md:min-h-105 md:p-10">
-          {/* Label atas */}
-          <div className="flex items-center justify-between">
-            <span className="rounded-full border border-white/15 bg-black/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-300 backdrop-blur-md">
-              Club Profile
-            </span>
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+              <span className="border border-cyan-400/30 bg-cyan-400/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-300 backdrop-blur-md">
+                Club Profile / System
+              </span>
+            </div>
 
-            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300">
-              Season 2026/2027
+            <span className="border border-purple-400/30 bg-purple-500/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-300">
+              ◈ Season 2026/2027
             </span>
           </div>
 
-          {/* Informasi utama */}
-          <div className="mt-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          {/* Main content */}
+          <div className="mt-12 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
-              {/* Logo klub */}
-              <div className="mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-amber-400/40 bg-black/50 p-2 shadow-xl shadow-black/30 backdrop-blur-md">
+              {/* Club Logo */}
+              <div className="relative mb-6 flex h-24 w-24 items-center justify-center border border-cyan-400/50 bg-[#080d1c]/80 p-3 shadow-[0_0_25px_rgba(34,211,238,0.15)] backdrop-blur-xl">
+                {/* Corner decoration */}
+                <div className="absolute -left-px -top-px h-4 w-4 border-l-2 border-t-2 border-cyan-300" />
+                <div className="absolute -bottom-px -right-px h-4 w-4 border-b-2 border-r-2 border-cyan-300" />
+
                 {club.logo ? (
                   <img
                     src={`http://localhost:3000/images/clubs/${club.logo}`}
@@ -370,93 +392,130 @@ export default function ClubProfile() {
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <span className="text-3xl font-black text-amber-400">
-                    {club.name_club.slice(0, 2).toUpperCase()}
+                  <span className="text-3xl font-black text-cyan-400">
+                    {(club.name_club ?? "Club").slice(0, 2).toUpperCase()}
                   </span>
                 )}
               </div>
 
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.35em] text-amber-400">
+              {/* Subtitle */}
+              <p className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-cyan-400">
+                <span className="h-px w-8 bg-cyan-400" />
                 Stronger Together
               </p>
 
-              <h1 className="text-4xl font-black uppercase tracking-tight text-white drop-shadow-lg md:text-6xl">
+              {/* Club name */}
+              <h1 className="text-4xl font-black uppercase leading-none tracking-tight text-white drop-shadow-[0_0_15px_rgba(34,211,238,0.2)] md:text-6xl">
                 {club.name_club}
               </h1>
 
-              <div className="mt-5 flex flex-wrap gap-x-7 gap-y-3 text-sm text-zinc-300">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg text-amber-400">⌂</span>
+              {/* Accent line */}
+              <div className="mt-4 h-[2px] w-32 bg-linear-to-r from-cyan-400 via-purple-500 to-transparent shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
+
+              {/* Club information */}
+              <div className="mt-7 flex flex-wrap gap-3">
+                {/* Stadium */}
+                <div className="flex min-w-55 items-center gap-3 border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-md transition hover:border-cyan-400/40">
+                  <div className="flex h-10 w-10 items-center justify-center border border-cyan-400/20 bg-cyan-400/10 text-xl text-cyan-400">
+                    ⌂
+                  </div>
+
                   <div>
-                    <p className="font-semibold text-white">
-                      {club.stadium || "Stadion belum diatur"}
+                    <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-cyan-400">
+                      Home Stadium
                     </p>
-                    <p className="text-xs text-zinc-400">Home Stadium</p>
+                    <p className="mt-1 text-sm font-bold capitalize text-white">
+                      {club.stadium?.name_stadium || "Stadion belum diatur"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-lg text-amber-400">⌖</span>
+                {/* District */}
+                <div className="flex min-w-55 items-center gap-3 border border-white/10 bg-black/40 px-4 py-3 backdrop-blur-md transition hover:border-purple-400/40">
+                  <div className="flex h-10 w-10 items-center justify-center border border-purple-400/20 bg-purple-400/10 text-xl text-purple-400">
+                    ⌖
+                  </div>
+
                   <div>
-                    <p className="font-semibold text-white">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-purple-400">
+                      District
+                    </p>
+                    <p className="mt-1 text-sm font-bold capitalize text-white">
                       {club.district || "Distrik belum diatur"}
                     </p>
-                    <p className="text-xs text-zinc-400">District</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Tombol edit tetap berfungsi */}
+            {/* Edit button */}
             <button
               type="button"
               onClick={() => setShowEditClub(true)}
-              className="inline-flex shrink-0 items-center justify-center gap-3 rounded-xl bg-amber-400 px-6 py-3.5 font-bold text-zinc-950 shadow-lg shadow-amber-950/30 transition hover:-translate-y-0.5 hover:bg-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-zinc-950"
+              className="group/btn relative inline-flex shrink-0 items-center justify-center gap-3 overflow-hidden border border-cyan-400/60 bg-cyan-400 px-6 py-3.5 font-black uppercase tracking-wider text-[#050711] shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-[#050711]"
             >
               <span aria-hidden="true">✎</span>
               Edit Club
-              <span aria-hidden="true">→</span>
+              <span className="transition-transform group-hover/btn:translate-x-1">
+                →
+              </span>
             </button>
           </div>
 
-          {/* Garis dekoratif */}
-          <div className="mt-8 h-px bg-gradient-to-r from-amber-400/70 via-white/20 to-transparent" />
+          {/* Footer decoration */}
+          <div className="mt-8 flex items-center gap-3">
+            <div className="h-[2px] flex-1 bg-linear-to-r from-cyan-400/70 via-purple-500/30 to-transparent" />
+            <span className="text-[9px] font-bold tracking-[0.3em] text-cyan-400/50">
+              FOOTBALL MANAGEMENT SYSTEM
+            </span>
+            <div className="h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+          </div>
         </div>
       </section>
-      {/* ========================= CLUB LOCATION ========================= */}
-
       {/* ========================= STANDING STATISTICS ========================= */}
+      <section className="relative isolate overflow-hidden rounded-3xl border border-cyan-400/15 bg-[#050711] p-5 shadow-[0_0_40px_rgba(6,182,212,0.06)] md:p-8">
+        {/* Cyberpunk background */}
+        <div className="pointer-events-none absolute -right-32 -top-32 -z-10 h-96 w-96 rounded-full bg-cyan-500/10 blur-[100px]" />
+        <div className="pointer-events-none absolute -bottom-32 -left-32 -z-10 h-96 w-96 rounded-full bg-purple-600/10 blur-[100px]" />
 
-      <section className="relative overflow-hidden rounded-3xl border border-white/8 bg-[#080e19] p-5 shadow-2xl shadow-black/20 md:p-8">
-        {/* Background decoration */}
-        <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-amber-400/[0.04] blur-3xl" />
+        <div
+          className="pointer-events-none absolute inset-0 -z-10 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(34,211,238,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.5) 1px, transparent 1px)",
+            backgroundSize: "35px 35px",
+            maskImage: "linear-gradient(to bottom, black, transparent 90%)",
+          }}
+        />
 
         {/* Header */}
         <div className="relative mb-8 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300">
+            <div className="relative flex h-12 w-12 items-center justify-center border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.1)]">
               <i data-lucide="chart-no-axes-combined" className="h-6 w-6" />
+              <span className="absolute -right-px -top-px h-2 w-2 bg-cyan-300 shadow-[0_0_8px_#22d3ee]" />
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-2xl font-black uppercase tracking-tight text-white md:text-3xl">
                   Team Statistics
                 </h2>
-                <span className="rounded-md border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+
+                <span className="border border-cyan-400/30 bg-cyan-400/10 px-2 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-cyan-300">
                   Overview
                 </span>
               </div>
+
               <p className="mt-1 text-xs font-medium tracking-wide text-slate-500">
-                Performance Analytics · {season}
+                Performance Analytics / {season}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
-            <span className="text-xs font-semibold text-slate-300">
+          <div className="flex items-center gap-2 border border-purple-400/20 bg-purple-400/5 px-4 py-2">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-200">
               Season {season}
             </span>
           </div>
@@ -464,13 +523,20 @@ export default function ClubProfile() {
 
         {standing ? (
           <>
-            {/* Main layout */}
+            {/* Main statistics */}
             <div className="relative grid gap-5 lg:grid-cols-5">
-              {/* Donut chart panel */}
-              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:p-7 lg:col-span-3">
-                <div className="mb-6 flex items-start justify-between gap-3">
+              {/* Match Results */}
+              <div className="relative overflow-hidden border border-cyan-400/15 bg-[#090f1e]/80 p-5 backdrop-blur-xl sm:p-7 lg:col-span-3">
+                {/* Panel decoration */}
+                <div className="absolute right-0 top-0 h-px w-1/3 bg-linear-to-l from-cyan-400 to-transparent" />
+                <div className="absolute bottom-0 left-0 h-px w-1/3 bg-linear-to-r from-purple-500/60 to-transparent" />
+
+                <div className="mb-7 flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold text-white">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400">
+                      01 / Match Analysis
+                    </p>
+                    <h3 className="mt-2 text-lg font-black uppercase tracking-wide text-white">
                       Match Results
                     </h3>
                     <p className="mt-1 text-xs text-slate-500">
@@ -478,8 +544,8 @@ export default function ClubProfile() {
                     </p>
                   </div>
 
-                  <span className="rounded-lg bg-white/[0.05] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    {standing.match > 0 ? "Season stats" : "No matches"}
+                  <span className="border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    {standing.match > 0 ? "Season Stats" : "No Matches"}
                   </span>
                 </div>
 
@@ -488,6 +554,7 @@ export default function ClubProfile() {
                   const draws = Math.max(0, Number(standing.draw) || 0);
                   const losses = Math.max(0, Number(standing.lose) || 0);
                   const matches = Math.max(0, Number(standing.match) || 0);
+
                   const totalResults = wins + draws + losses;
                   const radius = 70;
                   const circumference = 2 * Math.PI * radius;
@@ -496,10 +563,12 @@ export default function ClubProfile() {
                     totalResults > 0
                       ? (wins / totalResults) * circumference
                       : 0;
+
                   const drawLength =
                     totalResults > 0
                       ? (draws / totalResults) * circumference
                       : 0;
+
                   const lossLength =
                     totalResults > 0
                       ? (losses / totalResults) * circumference
@@ -509,14 +578,14 @@ export default function ClubProfile() {
                     {
                       label: "Wins",
                       value: wins,
-                      color: "#34d399",
+                      color: "#22d3ee",
                       length: winLength,
                       offset: 0,
                     },
                     {
                       label: "Draws",
                       value: draws,
-                      color: "#fbbf24",
+                      color: "#a78bfa",
                       length: drawLength,
                       offset: winLength,
                     },
@@ -530,11 +599,11 @@ export default function ClubProfile() {
                   ];
 
                   return (
-                    <div className="grid items-center gap-7 sm:grid-cols-2 sm:gap-5">
-                      {/* SVG donut */}
+                    <div className="grid items-center gap-8 sm:grid-cols-2">
+                      {/* Donut chart */}
                       <div className="mx-auto w-full max-w-[240px]">
                         <div className="relative mx-auto aspect-square w-full">
-                          <div className="pointer-events-none absolute inset-[15%] rounded-full bg-emerald-400/[0.04] blur-2xl" />
+                          <div className="pointer-events-none absolute inset-[15%] rounded-full bg-cyan-400/10 blur-2xl" />
 
                           <svg
                             viewBox="0 0 180 180"
@@ -547,7 +616,7 @@ export default function ClubProfile() {
                               cy="90"
                               r={radius}
                               fill="none"
-                              stroke="rgba(255,255,255,0.055)"
+                              stroke="rgba(255,255,255,0.06)"
                               strokeWidth="15"
                             />
 
@@ -564,26 +633,31 @@ export default function ClubProfile() {
                                 strokeDashoffset={-segment.offset}
                                 strokeLinecap="round"
                                 className="transition-all duration-700 ease-out"
+                                style={{
+                                  filter: `drop-shadow(0 0 5px ${segment.color}88)`,
+                                }}
                               />
                             ))}
                           </svg>
 
                           <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400">
                               Matches
                             </span>
-                            <span className="mt-1 text-4xl font-black tracking-tighter text-white sm:text-5xl">
+
+                            <span className="mt-1 text-5xl font-black tracking-tighter text-white">
                               {matches}
                             </span>
-                            <span className="mt-1 text-[10px] font-medium text-slate-500">
+
+                            <span className="mt-1 text-[9px] font-bold uppercase tracking-widest text-slate-500">
                               Played
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Legend */}
-                      <div className="space-y-5">
+                      {/* Result legend */}
+                      <div className="space-y-6">
                         {segments.map((segment) => {
                           const percentage =
                             totalResults > 0
@@ -595,33 +669,35 @@ export default function ClubProfile() {
                               <div className="mb-2 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2.5">
                                   <span
-                                    className="h-2.5 w-2.5 rounded-full"
+                                    className="h-2.5 w-2.5"
                                     style={{
                                       backgroundColor: segment.color,
-                                      boxShadow: `0 0 12px ${segment.color}55`,
+                                      boxShadow: `0 0 12px ${segment.color}`,
                                     }}
                                   />
-                                  <span className="text-sm font-semibold text-slate-300">
+
+                                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
                                     {segment.label}
                                   </span>
                                 </div>
 
-                                <div className="text-right">
-                                  <span className="text-base font-black text-white">
+                                <div>
+                                  <span className="text-lg font-black text-white">
                                     {segment.value}
                                   </span>
-                                  <span className="ml-1.5 text-xs text-slate-500">
+                                  <span className="ml-2 text-[10px] font-bold text-slate-500">
                                     {percentage.toFixed(0)}%
                                   </span>
                                 </div>
                               </div>
 
-                              <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                              <div className="h-1.5 overflow-hidden bg-white/[0.06]">
                                 <div
-                                  className="h-full rounded-full transition-all duration-700"
+                                  className="h-full transition-all duration-700"
                                   style={{
                                     width: `${percentage}%`,
                                     backgroundColor: segment.color,
+                                    boxShadow: `0 0 10px ${segment.color}66`,
                                   }}
                                 />
                               </div>
@@ -629,12 +705,13 @@ export default function ClubProfile() {
                           );
                         })}
 
-                        <div className="border-t border-white/[0.07] pt-4">
+                        <div className="border-t border-white/10 pt-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-500">
-                              Win rate
+                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                              Win Rate
                             </span>
-                            <span className="text-lg font-black text-emerald-300">
+
+                            <span className="text-xl font-black text-cyan-300">
                               {totalResults > 0
                                 ? `${((wins / totalResults) * 100).toFixed(1)}%`
                                 : "—"}
@@ -647,34 +724,46 @@ export default function ClubProfile() {
                 })()}
               </div>
 
-              {/* Points highlight */}
-              <div className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-amber-300/15 bg-gradient-to-br from-amber-300/[0.12] via-[#15140f] to-[#0d1019] p-6 lg:col-span-2">
-                <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-amber-300/[0.08] blur-2xl" />
+              {/* Total Points */}
+              <div className="group relative flex flex-col justify-between overflow-hidden border border-purple-400/25 bg-[#0c0b20] p-6 lg:col-span-2">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-purple-500/15 blur-[70px]" />
+                <div className="pointer-events-none absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-cyan-400/10 blur-[70px]" />
 
-                <div className="relative flex items-center justify-between gap-3">
+                {/* Corner decoration */}
+                <div className="absolute left-0 top-0 h-8 w-8 border-l-2 border-t-2 border-purple-400/60" />
+                <div className="absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-purple-400/60" />
+
+                <div className="relative flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200/70">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-purple-300">
+                      02 / Performance
+                    </p>
+
+                    <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
                       Total Points
                     </p>
-                    <p className="mt-3 text-5xl font-black tracking-tighter text-white sm:text-6xl">
+
+                    <p className="mt-2 text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(167,139,250,0.25)]">
                       {standing.points}
                     </p>
-                    <p className="mt-2 text-xs text-slate-400">
+
+                    <p className="mt-2 text-xs text-slate-500">
                       Points earned this season
                     </p>
                   </div>
 
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 text-amber-300">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center border border-purple-400/30 bg-purple-400/10 text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.12)]">
                     <i data-lucide="trophy" className="h-6 w-6" />
                   </div>
                 </div>
 
-                <div className="relative mt-8 border-t border-white/[0.08] pt-5">
+                <div className="relative mt-10 border-t border-white/10 pt-5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-medium text-slate-400">
-                      Points per match
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Points Per Match
                     </span>
-                    <span className="text-sm font-bold text-amber-200">
+
+                    <span className="text-sm font-black text-purple-300">
                       {Number(standing.match) > 0
                         ? (
                             Number(standing.points) / Number(standing.match)
@@ -683,9 +772,9 @@ export default function ClubProfile() {
                     </span>
                   </div>
 
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                  <div className="mt-4 h-2 overflow-hidden bg-white/[0.06]">
                     <div
-                      className="h-full rounded-full bg-linear-to-r from-amber-500 to-yellow-200"
+                      className="h-full bg-linear-to-r from-purple-600 via-purple-400 to-cyan-300 shadow-[0_0_12px_rgba(168,85,247,0.4)]"
                       style={{
                         width: `${Math.min(
                           100,
@@ -699,119 +788,160 @@ export default function ClubProfile() {
                     />
                   </div>
 
-                  <p className="mt-2 text-[10px] text-slate-500">
+                  <p className="mt-3 text-[9px] leading-relaxed text-slate-500">
                     Points earned compared with the maximum available
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Supporting statistics */}
-            <div className="relative mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                {
-                  label: "Goals For",
-                  value: standing.goals_for,
-                  icon: "goal",
-                  color: "text-emerald-300",
-                  bg: "bg-emerald-400/10",
-                  border: "border-emerald-400/10",
-                },
-                {
-                  label: "Goals Against",
-                  value: standing.goals_againts,
-                  icon: "shield",
-                  color: "text-rose-300",
-                  bg: "bg-rose-400/10",
-                  border: "border-rose-400/10",
-                },
-                {
-                  label: "Goal Difference",
-                  value:
-                    standing.goal_difference > 0
-                      ? `+${standing.goal_difference}`
-                      : standing.goal_difference,
-                  icon: "trending-up",
-                  color:
-                    standing.goal_difference > 0
-                      ? "text-emerald-300"
-                      : standing.goal_difference < 0
-                        ? "text-rose-300"
-                        : "text-slate-300",
-                  bg:
-                    standing.goal_difference > 0
-                      ? "bg-emerald-400/10"
-                      : standing.goal_difference < 0
-                        ? "bg-rose-400/10"
-                        : "bg-white/[0.05]",
-                  border: "border-white/[0.07]",
-                },
-                {
-                  label: "Avg. Goals",
-                  value:
-                    Number(standing.match) > 0
-                      ? (
-                          Number(standing.goals_for) / Number(standing.match)
-                        ).toFixed(2)
-                      : "—",
-                  icon: "chart-no-axes-combined",
-                  color: "text-sky-300",
-                  bg: "bg-sky-400/10",
-                  border: "border-sky-400/10",
-                },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className={`group relative overflow-hidden rounded-2xl border ${stat.border} bg-white/[0.025] p-4 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.05] sm:p-5`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:text-xs">
-                      {stat.label}
-                    </span>
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}
-                    >
-                      <i data-lucide={stat.icon} className="h-4 w-4" />
-                    </span>
-                  </div>
+            {/* Supporting Statistics */}
+            <div className="relative mt-5">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="h-px w-7 bg-cyan-400" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">
+                  03 / Advanced Metrics
+                </h3>
+              </div>
 
-                  <p
-                    className={`mt-4 text-2xl font-black tracking-tight ${stat.color} sm:text-3xl`}
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {[
+                  {
+                    label: "Goals For",
+                    value: standing.goals_for,
+                    icon: "goal",
+                    color: "text-cyan-300",
+                    bg: "bg-cyan-400/10",
+                    border: "hover:border-cyan-400/40",
+                    glow: "group-hover:shadow-[0_0_20px_rgba(34,211,238,0.08)]",
+                  },
+                  {
+                    label: "Goals Against",
+                    value: standing.goals_againts,
+                    icon: "shield",
+                    color: "text-rose-300",
+                    bg: "bg-rose-400/10",
+                    border: "hover:border-rose-400/40",
+                    glow: "group-hover:shadow-[0_0_20px_rgba(251,113,133,0.08)]",
+                  },
+                  {
+                    label: "Goal Difference",
+                    value:
+                      standing.goal_difference > 0
+                        ? `+${standing.goal_difference}`
+                        : standing.goal_difference,
+                    icon: "trending-up",
+                    color:
+                      standing.goal_difference > 0
+                        ? "text-cyan-300"
+                        : standing.goal_difference < 0
+                          ? "text-rose-300"
+                          : "text-slate-300",
+                    bg:
+                      standing.goal_difference > 0
+                        ? "bg-cyan-400/10"
+                        : standing.goal_difference < 0
+                          ? "bg-rose-400/10"
+                          : "bg-white/[0.05]",
+                    border: "hover:border-purple-400/40",
+                    glow: "group-hover:shadow-[0_0_20px_rgba(168,85,247,0.08)]",
+                  },
+                  {
+                    label: "Avg. Goals",
+                    value:
+                      Number(standing.match) > 0
+                        ? (
+                            Number(standing.goals_for) / Number(standing.match)
+                          ).toFixed(2)
+                        : "—",
+                    icon: "chart-no-axes-combined",
+                    color: "text-purple-300",
+                    bg: "bg-purple-400/10",
+                    border: "hover:border-purple-400/40",
+                    glow: "group-hover:shadow-[0_0_20px_rgba(168,85,247,0.08)]",
+                  },
+                ].map((stat, index) => (
+                  <div
+                    key={stat.label}
+                    className={`group relative overflow-hidden border border-white/10 bg-[#090f1e]/80 p-4 transition-all duration-300 hover:-translate-y-1 ${stat.border} ${stat.glow} sm:p-5`}
                   >
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
+                    <div className="absolute right-0 top-0 h-px w-1/2 bg-linear-to-l from-white/20 to-transparent" />
+
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-500 sm:text-[10px]">
+                        {stat.label}
+                      </span>
+
+                      <span
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center border border-white/5 ${stat.bg} ${stat.color}`}
+                      >
+                        <i data-lucide={stat.icon} className="h-4 w-4" />
+                      </span>
+                    </div>
+
+                    <p
+                      className={`mt-5 text-2xl font-black tracking-tight ${stat.color} sm:text-3xl`}
+                    >
+                      {stat.value}
+                    </p>
+
+                    <div className="mt-4 flex gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={`h-[2px] flex-1 ${
+                            i <= index ? "bg-cyan-400/50" : "bg-white/[0.06]"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Footer */}
-            <div className="relative mt-7 flex flex-wrap items-center gap-3 border-t border-white/[0.07] pt-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/10 bg-amber-300/[0.06] text-amber-300">
+            <div className="relative mt-8 flex flex-wrap items-center gap-3 border-t border-cyan-400/10 pt-5">
+              <div className="flex h-9 w-9 items-center justify-center border border-purple-400/20 bg-purple-400/10 text-purple-300">
                 <i data-lucide="trophy" className="h-4 w-4" />
               </div>
 
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-200">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-purple-300">
                   Bigger Dreams
                 </p>
-                <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-500">
-                  Stronger Together · {season}
+
+                <p className="mt-1 text-[9px] font-medium tracking-wide text-slate-500">
+                  Stronger Together / {season}
                 </p>
               </div>
 
-              <div className="ml-auto hidden h-px min-w-10 flex-1 bg-linear-to-r from-amber-300/30 to-transparent sm:block" />
+              <div className="ml-auto flex items-center gap-2">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+                <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-cyan-400/50">
+                  Analytics System
+                </span>
+              </div>
             </div>
           </>
         ) : (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-slate-500">
-              <i data-lucide="chart-no-axes-combined" className="h-6 w-6" />
+          /* Empty State */
+          <div className="relative overflow-hidden border border-dashed border-cyan-400/20 bg-[#090f1e]/70 px-6 py-16 text-center">
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/5 blur-3xl" />
+
+            <div className="relative mx-auto flex h-16 w-16 items-center justify-center border border-cyan-400/20 bg-cyan-400/5 text-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.08)]">
+              <i data-lucide="chart-no-axes-combined" className="h-7 w-7" />
             </div>
 
-            <h3 className="mt-5 text-base font-bold text-white">
+            <p className="relative mt-5 text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400">
+              System / Data Unavailable
+            </p>
+
+            <h3 className="relative mt-3 text-lg font-black uppercase tracking-wide text-white">
               No Statistics Yet
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+
+            <p className="relative mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
               Belum ada statistik untuk klub ini pada musim {season}.
             </p>
           </div>
@@ -819,48 +949,80 @@ export default function ClubProfile() {
       </section>
 
       {/* ========================= PLAYERS ========================= */}
-      <section className="mt-10">
-        {/* Header */}
-        <div className="mb-6 flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
-              Squad
-            </p>
+      <section className="relative mt-12">
+        {/* Background glow */}
+        <div className="pointer-events-none absolute -left-20 top-20 h-64 w-64 rounded-full bg-cyan-500/[0.05] blur-[100px]" />
+        <div className="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-purple-500/[0.05] blur-[100px]" />
 
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
-              Players
+        {/* Header */}
+        <div className="relative mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+
+              <p className="text-[10px] font-black uppercase tracking-[0.35em] text-cyan-400">
+                Squad Management / Database
+              </p>
+            </div>
+
+            <h2 className="text-3xl font-black uppercase tracking-tight text-white md:text-4xl">
+              Team <span className="text-cyan-400">Players</span>
             </h2>
 
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-2 text-sm text-slate-500">
               Daftar pemain yang terdaftar di klub ini.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setShowAddPlayer(true)}
-            className="group flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-zinc-200 hover:shadow-lg"
-          >
-            <span className="text-lg leading-none transition-transform duration-300 group-hover:rotate-90">
-              +
-            </span>
-            Add Player
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Player counter */}
+            <div className="border border-white/10 bg-white/[0.03] px-4 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">
+                Total Squad
+              </p>
+
+              <p className="mt-0.5 text-xl font-black text-cyan-300">
+                {players.length.toString().padStart(2, "0")}
+              </p>
+            </div>
+
+            {/* Add player */}
+            <button
+              type="button"
+              onClick={() => setShowAddPlayer(true)}
+              className="group relative inline-flex items-center gap-2 overflow-hidden border border-cyan-400/50 bg-cyan-400 px-5 py-3 text-xs font-black uppercase tracking-wider text-[#050711] shadow-[0_0_15px_rgba(34,211,238,0.12)] transition-all duration-300 hover:-translate-y-1 hover:bg-white hover:shadow-[0_0_25px_rgba(34,211,238,0.35)]"
+            >
+              <span className="text-lg leading-none transition-transform group-hover:rotate-90">
+                +
+              </span>
+              Add Player
+            </button>
+          </div>
+        </div>
+
+        {/* Section separator */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-linear-to-r from-cyan-400/50 via-white/10 to-transparent" />
+
+          <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-slate-600">
+            Squad Members
+          </span>
         </div>
 
         {/* Loading */}
         {loadingPlayers && (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4].map((item) => (
               <div
                 key={item}
-                className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+                className="overflow-hidden border border-cyan-400/10 bg-[#090f1e]"
               >
-                <div className="h-56 animate-pulse bg-zinc-800" />
+                <div className="aspect-[4/4.5] animate-pulse bg-slate-800/70" />
 
                 <div className="space-y-3 p-4">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-zinc-800" />
-                  <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-800" />
+                  <div className="h-5 w-2/3 animate-pulse bg-slate-800" />
+                  <div className="h-3 w-1/3 animate-pulse bg-slate-800" />
+                  <div className="h-8 animate-pulse bg-slate-800/60" />
                 </div>
               </div>
             ))}
@@ -869,98 +1031,144 @@ export default function ClubProfile() {
 
         {/* Empty State */}
         {!loadingPlayers && players.length === 0 && (
-          <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 px-6 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-800">
-              <span className="text-2xl text-zinc-500">⚽</span>
+          <div className="relative flex min-h-80 flex-col items-center justify-center overflow-hidden border border-dashed border-cyan-400/20 bg-[#090f1e]/70 px-6 text-center">
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/5 blur-[80px]" />
+
+            <div className="relative flex h-20 w-20 items-center justify-center border border-cyan-400/20 bg-cyan-400/5 text-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.08)]">
+              <i data-lucide="users" className="h-9 w-9" />
             </div>
 
-            <h3 className="font-semibold text-white">Belum Ada Player</h3>
+            <p className="relative mt-6 text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400">
+              Database / Empty
+            </p>
 
-            <p className="mt-1 max-w-sm text-sm text-zinc-500">
-              Tambahkan pemain untuk mulai membangun squad klub ini.
+            <h3 className="relative mt-2 text-xl font-black uppercase text-white">
+              No Players Found
+            </h3>
+
+            <p className="relative mt-2 max-w-sm text-sm leading-6 text-slate-500">
+              Belum ada pemain yang terdaftar. Tambahkan pemain untuk mulai
+              membangun squad klub ini.
             </p>
 
             <button
               type="button"
               onClick={() => setShowAddPlayer(true)}
-              className="mt-5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black transition hover:bg-zinc-200"
+              className="relative mt-6 border border-cyan-400/50 bg-cyan-400 px-6 py-3 text-xs font-black uppercase tracking-wider text-[#050711] transition hover:bg-white hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]"
             >
               + Add First Player
             </button>
           </div>
         )}
 
-        {/* Players */}
+        {/* Players Grid */}
         {!loadingPlayers && players.length > 0 && (
-          <div className="players-scroll flex flex-nowrap gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {players.map((player) => (
               <div
                 key={player._id}
-                className="group relative w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-2xl"
+                className="group relative min-w-0 overflow-hidden border border-white/10 bg-[#090f1e] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(34,211,238,0.10)]"
               >
-                {/* Player Image */}
-                <div className="relative aspect-[4/5] overflow-hidden bg-zinc-800">
+                {/* Top accent */}
+                <div className="absolute left-0 right-0 top-0 z-20 h-[2px] bg-linear-to-r from-transparent via-cyan-400 to-transparent opacity-40 transition-opacity group-hover:opacity-100" />
+
+                {/* Player image */}
+                <div className="relative aspect-[4/4.5] overflow-hidden bg-[#111827]">
                   {player.photo ? (
                     <img
                       src={`http://localhost:3000${player.photo}`}
                       alt={player.name_player}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <span className="text-[100px] font-black leading-none text-zinc-700">
+                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#111827] to-[#080d19]">
+                      <span className="text-8xl font-black italic text-cyan-400/15">
                         {player.number}
                       </span>
                     </div>
                   )}
 
-                  {/* Dark Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80" />
+                  {/* Image overlay */}
+                  <div className="absolute inset-0 bg-linear-to-t from-[#050711] via-[#050711]/10 to-[#050711]/20" />
 
-                  {/* Jersey Number */}
+                  {/* Jersey number */}
                   <div className="absolute left-4 top-4">
-                    <span className="text-5xl font-black italic tracking-tighter text-white/90 drop-shadow-lg">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-cyan-400">
+                      Jersey
+                    </p>
+
+                    <span className="block text-5xl font-black italic leading-none tracking-tighter text-white drop-shadow-[0_0_12px_rgba(34,211,238,0.3)]">
                       {player.number}
                     </span>
                   </div>
 
-                  {/* Position Badge */}
-                  <div className="absolute right-3 top-3">
-                    <span className="rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                  {/* Position badge */}
+                  <div className="absolute right-3 top-3 border border-cyan-400/40 bg-[#050711]/80 px-3 py-1.5 backdrop-blur-md">
+                    <span className="text-[9px] font-black uppercase tracking-wider text-cyan-300">
                       {player.position}
                     </span>
                   </div>
 
-                  {/* Player Name On Image */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <p className="truncate text-lg font-bold text-white">
-                      {player.name_player}
+                  {/* Player name */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.25em] text-cyan-400">
+                      Squad Member
                     </p>
 
-                    <p className="mt-0.5 text-xs font-medium uppercase tracking-wider text-zinc-400">
-                      Player
-                    </p>
+                    <h3 className="break-words text-xl font-black uppercase leading-tight tracking-tight text-white">
+                      {player.name_player}
+                    </h3>
+
+                    <div className="mt-3 h-px w-full bg-linear-to-r from-cyan-400/60 via-white/20 to-transparent" />
                   </div>
                 </div>
 
-                {/* Bottom Info */}
-                <div className="flex items-center justify-between border-t border-zinc-800 px-4 py-3">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-                      Position
+                {/* Player information */}
+                <div className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                      Playing Position
                     </p>
 
-                    <p className="mt-0.5 text-sm font-semibold text-zinc-200">
+                    <p className="mt-1 truncate text-sm font-bold text-slate-200">
                       {player.position}
                     </p>
                   </div>
 
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-800 text-sm font-bold text-zinc-300 transition-colors group-hover:bg-white group-hover:text-black">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-cyan-400/20 bg-cyan-400/5 text-sm font-black text-cyan-300 transition-all group-hover:border-cyan-400/50 group-hover:bg-cyan-400/10">
                     {player.number}
                   </div>
                 </div>
+
+                {/* Bottom decoration */}
+                <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2.5">
+                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-600">
+                    Player Database
+                  </span>
+
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-cyan-400/60">
+                      Registered
+                    </span>
+                  </span>
+                </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        {!loadingPlayers && players.length > 0 && (
+          <div className="mt-7 flex items-center gap-3 border-t border-white/[0.07] pt-5">
+            <i data-lucide="database" className="h-4 w-4 text-cyan-400" />
+
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
+              Squad Database / {players.length} Registered Players
+            </p>
+
+            <div className="ml-auto h-px flex-1 bg-linear-to-r from-cyan-400/30 to-transparent" />
           </div>
         )}
       </section>
