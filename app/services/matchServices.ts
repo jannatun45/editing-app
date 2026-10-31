@@ -61,9 +61,7 @@ export async function resetMatch(id: string) {
   const result = await response.json();
 
   if (!response.ok) {
-    const error = await response.json();
-
-    throw new Error(error.message || "Gagal memperbarui jadwal");
+    throw new Error(result?.message || "Gagal memperbarui jadwal");
   }
 
   return result.data;

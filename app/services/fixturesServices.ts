@@ -115,25 +115,25 @@ export async function updateMatch(
 }
 
 // Generate jadwal satu season
-export async function generateMatches(season: string) {
-  const response = await fetch(`${API_URL}/matches/generate`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      season,
-    }),
-  });
+// export async function generateMatches(season: string) {
+//   const response = await fetch(`${API_URL}/matches/generate`, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify({
+//       season,
+//     }),
+//   });
 
-  const data = await response.json();
+//   const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.message || "Gagal membuat jadwal");
-  }
+//   if (!response.ok) {
+//     throw new Error(data.message || "Gagal membuat jadwal");
+//   }
 
-  return data;
-}
+//   return data;
+// }
 
 // DONE sudah di pindah di matches services ( reset fixture )
 // export async function resetFixtureResult(id: string) {

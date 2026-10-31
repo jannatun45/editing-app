@@ -20,11 +20,14 @@ export default function AddPlayerModal({
   const [contractExpires, setContractExpires] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     try {
       setLoading(true);
       setError("");
+
       const formData = new FormData();
       formData.append("club", clubId);
       formData.append("name_player", namePlayer);
@@ -48,10 +51,12 @@ export default function AddPlayerModal({
       if (contractExpires) {
         formData.append("contract_expires", contractExpires);
       }
+
       const response = await fetch("http://localhost:3000/api/players", {
         method: "POST",
         body: formData,
       });
+
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message || "Gagal menambahkan player");
@@ -67,12 +72,9 @@ export default function AddPlayerModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      {" "}
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-zinc-900 p-6">
-        {" "}
-        {/* Header */}{" "}
+        {/* HEADER */}
         <div className="mb-6 flex items-center justify-between">
-          {" "}
           <h2 className="text-xl font-bold text-white"> Add Player </h2>{" "}
           <button
             type="button"
@@ -83,6 +85,7 @@ export default function AddPlayerModal({
             ✕{" "}
           </button>{" "}
         </div>{" "}
+        {/* FORM SUBMIT */}
         <form onSubmit={handleSubmit} className="space-y-5">
           {" "}
           {/* Player Name */}{" "}
@@ -99,9 +102,9 @@ export default function AddPlayerModal({
               placeholder="Nama player"
               required
               className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white outline-none"
-            />{" "}
-          </div>{" "}
-          {/* Player Photo */}{" "}
+            />
+          </div>
+          {/* Player image */}
           <div>
             {" "}
             <label className="mb-2 block text-sm text-zinc-400">
@@ -122,17 +125,14 @@ export default function AddPlayerModal({
                 Selected: {photo.name}{" "}
               </p>
             )}{" "}
-          </div>{" "}
-          {/* Number + Position */}{" "}
+          </div>
+          {/* Number + Position */}
           <div className="grid grid-cols-2 gap-4">
-            {" "}
-            {/* Number */}{" "}
+            {/* Number */}
             <div>
-              {" "}
               <label className="mb-2 block text-sm text-zinc-400">
-                {" "}
-                Jersey Number{" "}
-              </label>{" "}
+                Jersey Number
+              </label>
               <input
                 type="number"
                 min="1"
@@ -240,11 +240,11 @@ export default function AddPlayerModal({
               onChange={(event) => setMarketValue(event.target.value)}
               placeholder="2500000"
               className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white outline-none"
-            />{" "}
-          </div>{" "}
-          {/* Error */}{" "}
+            />
+          </div>
+          {/* Error */}
           {error && <p className="text-sm text-red-400"> {error} </p>}{" "}
-          {/* Buttons */}{" "}
+          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
             {" "}
             <button

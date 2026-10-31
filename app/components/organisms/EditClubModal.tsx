@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Club } from "~/types/api/clubs";
+import { getAllStadiums, type Stadium } from "~/services/stadiumServices";
 
 type EditClubModalProps = {
   club: Club;
@@ -13,14 +14,43 @@ export default function EditClubModal({
   onSave,
 }: EditClubModalProps) {
   const [nameClub, setNameClub] = useState(club.name_club ?? "");
-  const [stadium, setStadium] = useState(club.stadium ?? "");
+
+  // Stadium menyimpan ID, bukan nama stadion
+  const [stadium, setStadium] = useState(
+    typeof club.stadium === "object" && club.stadium !== null
+      ? club.stadium._id
+      : (club.stadium ?? ""),
+  );
+
   const [district, setDistrict] = useState(club.district ?? "");
   const [logo, setLogo] = useState<File | null>(null);
   const [points, setPoints] = useState(String(club.points ?? 0));
+
+  const [stadiums, setStadiums] = useState<Stadium[]>([]);
+  const [loadingStadiums, setLoadingStadiums] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  console.log("EditClubModal rendered with club:", club);
+  // Ambil daftar stadion dari backend
+  useEffect(() => {
+    const fetchStadiums = async () => {
+      try {
+        setLoadingStadiums(true);
+        const data = await getAllStadiums();
+        setStadiums(data);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Gagal mengambil daftar stadion",
+        );
+      } finally {
+        setLoadingStadiums(false);
+      }
+    };
+
+    fetchStadiums();
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,7 +66,6 @@ export default function EditClubModal({
       formData.append("district", district);
       formData.append("points", points);
 
-      // Kirim logo hanya jika pengguna memilih logo baru
       if (logo) {
         formData.append("logo", logo);
       }
@@ -76,6 +105,7 @@ export default function EditClubModal({
           </p>
         )}
 
+        {/* Nama Club */}
         <div className="space-y-2">
           <label className="block text-sm text-zinc-300">Nama Club</label>
           <input
@@ -86,15 +116,36 @@ export default function EditClubModal({
           />
         </div>
 
+        {/* Pilih Stadium */}
         <div className="space-y-2">
           <label className="block text-sm text-zinc-300">Stadium</label>
-          <input
+
+          <select
             value={stadium}
             onChange={(event) => setStadium(event.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:border-blue-500"
-          />
+            required
+            disabled={loadingStadiums}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-white outline-none focus:border-blue-500 disabled:opacity-50"
+          >
+            <option value="">
+              {loadingStadiums ? "Memuat stadion..." : "Pilih Stadium"}
+            </option>
+
+            {stadiums.map((item) => (
+              <option key={item._id} value={item._id}>
+                {item.name_stadium} - {item.city}
+              </option>
+            ))}
+          </select>
+
+          {!loadingStadiums && stadiums.length === 0 && (
+            <p className="text-xs text-amber-400">
+              Belum ada data stadion. Tambahkan stadion terlebih dahulu.
+            </p>
+          )}
         </div>
 
+        {/* District */}
         <div className="space-y-2">
           <label className="block text-sm text-zinc-300">District</label>
           <input
@@ -104,7 +155,7 @@ export default function EditClubModal({
           />
         </div>
 
-        {/* Input poin */}
+        {/* Points */}
         <div className="space-y-2">
           <label className="block text-sm text-zinc-300">Points</label>
           <input
@@ -118,6 +169,7 @@ export default function EditClubModal({
           <p className="text-xs text-zinc-500">Masukkan jumlah poin klub.</p>
         </div>
 
+        {/* Logo */}
         <div className="space-y-2">
           <label className="block text-sm text-zinc-300">
             Logo Club (opsional)
@@ -130,6 +182,7 @@ export default function EditClubModal({
           />
         </div>
 
+        {/* Buttons */}
         <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
@@ -142,7 +195,7 @@ export default function EditClubModal({
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || loadingStadiums || stadiums.length === 0}
             className="rounded-lg bg-white px-4 py-2 font-medium text-black hover:bg-zinc-200 disabled:opacity-50"
           >
             {saving ? "Menyimpan..." : "Simpan Perubahan"}

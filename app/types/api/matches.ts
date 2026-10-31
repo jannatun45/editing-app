@@ -1,6 +1,7 @@
 export type MatchPlayer = {
   _id: string;
   name: string;
+  nickname?: string;
 };
 export type MatchClub = {
   _id: string;
@@ -12,6 +13,7 @@ export type MatchClub = {
 export type MatchGoal = {
   _id?: string;
   minute: number;
+  injury_time: number;
   club: MatchClub;
   scorer: MatchPlayer;
   player: MatchPlayer;
@@ -24,10 +26,11 @@ export type MatchGoalInput = {
   player: any;
   club: string;
   scorer: string;
-  minute: string;
+  minute: number;
   assist: string;
   is_own_goal: boolean;
   is_penalty: boolean;
+  injury_time: 0;
 };
 
 export type Match = {

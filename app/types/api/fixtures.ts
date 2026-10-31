@@ -1,57 +1,57 @@
-export type FixturePlayer = {
-  _id: string;
-  name: string;
-};
+// export type FixturePlayer = {
+//   _id: string;
+//   name: string;
+// };
 
-export type FixtureClub = {
-  _id: string;
-  name_club: string;
-  logo: string | null;
-};
+// export type FixtureClub = {
+//   _id: string;
+//   name_club: string;
+//   logo: string | null;
+// };
 
-export type FixtureGoal = {
-  _id: string;
+// export type FixtureGoal = {
+//   _id: string;
 
-  club: FixtureClub;
+//   club: FixtureClub;
 
-  scorer: FixturePlayer;
+//   scorer: FixturePlayer;
 
-  minute: number;
+//   minute: number;
 
-  assist: FixturePlayer | null;
+//   assist: FixturePlayer | null;
 
-  is_penalty: boolean;
-};
+//   is_penalty: boolean;
+// };
 
-export type FixtureGoalInput = {
-  club: string;
-  scorer: string;
-  minute: string;
-  assist: string;
-};
+// export type FixtureGoalInput = {
+//   club: string;
+//   scorer: string;
+//   minute: string;
+//   assist: string;
+// };
 
-export type Fixture = {
-  _id: string;
+// export type Fixture = {
+//   _id: string;
 
-  season: string;
+//   season: string;
 
-  matchday: number;
+//   matchday: number;
 
-  home_club: FixtureClub;
+//   home_club: FixtureClub;
 
-  away_club: FixtureClub;
+//   away_club: FixtureClub;
 
-  match_date: string | null;
+//   match_date: string | null;
 
-  home_score: number | null;
+//   home_score: number | null;
 
-  away_score: number | null;
+//   away_score: number | null;
 
-  status: "scheduled" | "finished" | "postponed";
+//   status: "scheduled" | "finished" | "postponed";
 
-  goals: FixtureGoal[];
+//   goals: FixtureGoal[];
 
-  createdAt: string;
+//   createdAt: string;
 
-  updatedAt: string;
-};
+//   updatedAt: string;
+// };

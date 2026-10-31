@@ -13,7 +13,6 @@ type EditScoreModalProps = {
   onClose: () => void;
   onReset: () => Promise<void>;
   onDelete: () => Promise<void>;
-
   onSave: (
     matchday: number,
     matchDate: string,
@@ -28,8 +27,8 @@ type EditScoreModalProps = {
 // apakah sama
 export default function EditScoreModal({
   match,
-  onClose,
   onSave,
+  onClose,
   onDelete,
   onReset,
 }: EditScoreModalProps) {
@@ -87,7 +86,7 @@ export default function EditScoreModal({
       setGoals([]);
       return;
     }
-
+    // console.log("is_penalty dari backend:", goal.is_penalty);
     const existingGoals: MatchGoalInput[] = match.goals.map((goal) => ({
       club: typeof goal.club === "object" ? goal.club._id : goal.club,
 
@@ -105,7 +104,10 @@ export default function EditScoreModal({
             ? goal.scorer._id
             : (goal.player ?? goal.scorer ?? ""),
 
-      minute: String(goal.minute),
+      minute: Number(goal.minute),
+      injury_time: Number(
+        goal.injury_time ?? 0,
+      ) as MatchGoalInput["injury_time"],
 
       assist:
         typeof goal.assist === "object"
@@ -120,18 +122,20 @@ export default function EditScoreModal({
   // ========================= HANDLE ADD GOAL =========================
   const handleAddGoal = () => {
     setGoals((currentGoals) => [
+      ...currentGoals,
       {
         club: match.home_club._id,
         scorer: "",
         player: "",
-        minute: "",
+        minute: 0,
+        injury_time: 0,
         assist: "",
         is_own_goal: false,
         is_penalty: false,
       },
-      ...currentGoals,
     ]);
   };
+
   // ========================= REMOVE GOAL =========================
   const handleRemoveGoal = (index: number) => {
     setGoals((currentGoals) =>
@@ -182,21 +186,19 @@ export default function EditScoreModal({
     );
   };
   // ========================= HANDLE SUBMIT =========================
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    console.log("submit pada page edit score modal");
 
     const day = Number(matchday);
     const home = Number(homeScore);
     const away = Number(awayScore);
 
-    // 1. Validasi jadwal
+    // 1. Validasi jadwal &
     if (!Number.isInteger(day) || day < 1) {
       setError("Matchday minimal 1");
       return;
     }
-
     if (!matchDate || Number.isNaN(new Date(matchDate).getTime())) {
       setError("Tanggal dan waktu pertandingan wajib diisi");
       return;
@@ -227,7 +229,8 @@ export default function EditScoreModal({
             ? goal.scorer._id
             : (goal.player ?? goal.scorer ?? ""),
 
-      minute: String(goal.minute),
+      minute: Number(goal.minute),
+      injury_time: Number(goal.injury_time) as MatchGoalInput["injury_time"],
       assist:
         typeof goal.assist === "object"
           ? (goal.assist?._id ?? "")
@@ -242,10 +245,11 @@ export default function EditScoreModal({
       items
         .map((goal) => ({
           club: goal.club,
-          scorer: goal.scorer,
-          minute: String(goal.minute),
+          scorer: goal.scorer || goal.player || "",
+          minute: Number(goal.minute),
           assist: goal.assist || "",
           is_own_goal: goal.is_own_goal ?? false,
+          is_penalty: goal.is_penalty ?? false,
         }))
         .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
 
@@ -273,46 +277,45 @@ export default function EditScoreModal({
       }
 
       for (const goal of goals) {
-        if (!goal.club || !goal.scorer || !String(goal.minute).trim()) {
+        const minuteText = String(goal.minute).trim();
+
+        if (!goal.club || !goal.scorer || !minuteText) {
           setError("Lengkapi club, pencetak gol, dan menit setiap goal");
           return;
         }
 
-        const minute = String(goal.minute).trim();
-
         // Format yang diperbolehkan: 1, 45, 90, 45+1, 90+3
         const minuteRegex = /^(\d{1,3})(?:\+(\d{1,2}))?$/;
-        const matchMinute = minute.match(minuteRegex);
+        const matchMinute = minuteText.match(minuteRegex);
 
         if (!matchMinute) {
-          setError("Format menit tidak valid. Contoh: 23, 45+1, atau 90+3");
+          setError("Menit harus berupa angka. Contoh: 23, 45, 45+1, atau 90+3");
           return;
         }
 
         const baseMinute = Number(matchMinute[1]);
-
-        if (baseMinute < 1 || baseMinute > 120) {
-          setError("Menit gol harus berada antara 1–120");
+        const injuryTime =
+          matchMinute[2] !== undefined ? Number(matchMinute[2]) : 0;
+        // Pastikan menit utama benar-benar bilangan bulat
+        if (
+          !Number.isInteger(baseMinute) ||
+          baseMinute < 1 ||
+          baseMinute > 120
+        ) {
+          setError("Menit gol harus berupa bilangan bulat antara 1–120");
           return;
         }
 
-        if (matchMinute[2] !== undefined && Number(matchMinute[2]) < 1) {
-          setError("Tambahan waktu harus minimal 1 menit");
+        // Validasi tambahan waktu
+        if (
+          matchMinute[2] !== undefined &&
+          (!Number.isInteger(injuryTime) || injuryTime < 1 || injuryTime > 99)
+        ) {
+          setError("Tambahan waktu harus berupa bilangan bulat antara 1–99");
           return;
         }
       }
     }
-    console.log("handle save di page matches");
-    console.log(
-      "data selected: ",
-      day,
-      matchDate,
-      home,
-      away,
-      goals,
-      posterFile,
-      shouldUpdateScore,
-    );
 
     // 6. Simpan jadwal dan kirim penanda perubahan skor
     onSave(day, matchDate, home, away, goals, posterFile, shouldUpdateScore);
@@ -518,22 +521,65 @@ export default function EditScoreModal({
                       </div>
 
                       {/* Minute */}
+                      {/* Minute */}
                       <div>
                         <label className="mb-2 block text-sm text-zinc-400">
                           Minute
                         </label>
 
                         <input
-                          type="text"
-                          value={String(goal.minute ?? "")}
-                          onChange={(event) =>
-                            handleGoalChange(
-                              index,
-                              "minute",
-                              event.target.value,
-                            )
-                          }
-                          placeholder="23"
+                          type="number"
+                          min="1"
+                          max="120"
+                          step="1"
+                          value={goal.minute || ""}
+                          onChange={(event) => {
+                            const value = event.target.value;
+
+                            setGoals((currentGoals) =>
+                              currentGoals.map((item, goalIndex) =>
+                                goalIndex === index
+                                  ? {
+                                      ...item,
+                                      minute: value === "" ? 0 : Number(value),
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          placeholder="45"
+                          className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white outline-none"
+                        />
+
+                        <label className="mb-2 mt-3 block text-sm text-zinc-400">
+                          Injury Time (opsional)
+                        </label>
+
+                        <input
+                          type="number"
+                          min="0"
+                          max="99"
+                          step="1"
+                          value={goal.injury_time || ""}
+                          onChange={(event) => {
+                            const value = event.target.value;
+
+                            setGoals((currentGoals) =>
+                              currentGoals.map((item, goalIndex) =>
+                                goalIndex === index
+                                  ? {
+                                      ...item,
+                                      injury_time: (value === ""
+                                        ? 0
+                                        : Number(
+                                            value,
+                                          )) as MatchGoalInput["injury_time"],
+                                    }
+                                  : item,
+                              ),
+                            );
+                          }}
+                          placeholder="Contoh: 5"
                           className="w-full rounded-lg bg-zinc-800 px-4 py-3 text-white outline-none"
                         />
                       </div>
@@ -656,12 +702,16 @@ export default function EditScoreModal({
                           {getPlayerName(goal.scorer)}{" "}
                         </span>
 
-                        <span className="text-zinc-500"> {goal.minute}'</span>
                         <span className="text-zinc-500">
-                          {" "}
-                          {goal.is_penalty && " (P)"}
+                          {goal.minute}
+                          {goal.injury_time > 0 ? `+${goal.injury_time}` : ""}'
+                          {goal.is_penalty ? " (P)" : ""}
+                          {goal.is_own_goal ? " (OG)" : ""}
                         </span>
-
+                        {/* <span>
+                          {goal.player.name_player} {goal.minute}
+                          {goal.is_penalty ? " (P)" : ""}
+                        </span> */}
                         {!goal.is_own_goal && (
                           <span className="text-zinc-500">
                             {" "}
